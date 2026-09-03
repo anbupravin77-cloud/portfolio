@@ -113,31 +113,55 @@ let robotLoadedCount = 0;
 
 
 /* ============================================================
-   PRELOADING
+   PRELOADING (Progressive)
    ============================================================ */
 function preloadRobotFrames() {
   return new Promise(resolve => {
-    robotFramePaths.forEach((src, i) => {
+    const INITIAL_BATCH = 15;
+    let initialLoaded = 0;
+    const targetInitial = Math.min(INITIAL_BATCH, totalRobotFrames);
+    const loadQueue = [...robotFramePaths.entries()]; 
+    const CONCURRENT = 6;
+    let activeLoads = 0;
+
+    function loadNext() {
+      if (loadQueue.length === 0 || activeLoads >= CONCURRENT) return;
+      
+      const [i, src] = loadQueue.shift();
+      activeLoads++;
+      
       const img = new Image();
       img.src = src;
       img.onload = img.onerror = () => {
         robotImages[i] = img;
         robotLoadedCount++;
-        const pct = Math.round((robotLoadedCount / totalRobotFrames) * 100);
-        loaderBar.style.width = `${pct}%`;
-        loaderPct.textContent = `${pct}%`;
-        if (robotLoadedCount >= totalRobotFrames) resolve();
+        activeLoads--;
+        
+        if (initialLoaded < targetInitial) {
+          initialLoaded++;
+          const pct = Math.round((initialLoaded / targetInitial) * 100);
+          if (loaderBar) loaderBar.style.width = `${pct}%`;
+          if (loaderPct) loaderPct.textContent = `${pct}%`;
+          
+          if (initialLoaded >= targetInitial) resolve();
+        }
+        loadNext();
       };
-    });
+      loadNext();
+    }
+    
+    for (let k = 0; k < CONCURRENT; k++) loadNext();
   });
 }
-
 
 /* ============================================================
    CANVAS SIZING & HIGH-DPI SHARPNESS
    ============================================================ */
 function resizeCanvases() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  // Cap at 1.5 to prevent massive memory usage on 2x/3x screens
+  const isMobile = window.innerWidth <= 768;
+  const maxDpr = isMobile ? 1 : 1.5;
+  const dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
   const w = window.innerWidth;
   const h = window.innerHeight;
 
@@ -148,26 +172,48 @@ function resizeCanvases() {
 }
 
 /**
- * Render Robot Frame with DPR awareness
+ * Render Robot Frame with DPR awareness and Nearest-Neighbor Cache
  */
+function getNearestLoadedFrame(targetIdx) {
+  if (robotImages[targetIdx] && robotImages[targetIdx].complete && robotImages[targetIdx].naturalWidth > 0) {
+    return { img: robotImages[targetIdx], idx: targetIdx };
+  }
+  for (let offset = 1; offset <= totalRobotFrames; offset++) {
+    const downIdx = targetIdx - offset;
+    if (downIdx >= 0 && robotImages[downIdx] && robotImages[downIdx].complete && robotImages[downIdx].naturalWidth > 0) {
+      return { img: robotImages[downIdx], idx: downIdx };
+    }
+    const upIdx = targetIdx + offset;
+    if (upIdx < totalRobotFrames && robotImages[upIdx] && robotImages[upIdx].complete && robotImages[upIdx].naturalWidth > 0) {
+      return { img: robotImages[upIdx], idx: upIdx };
+    }
+  }
+  return null;
+}
+
 function drawRobotFrame(index) {
   const safeIdx = Math.max(0, Math.min(totalRobotFrames - 1, Math.round(index)));
-  const img = robotImages[safeIdx];
-  if (!img || !img.complete || img.naturalWidth === 0) return;
-
+  const nearest = getNearestLoadedFrame(safeIdx);
+  if (!nearest) return;
+  
+  const { img, idx } = nearest;
+  if (animState.renderedRobotIndex === idx) {
+    animState.renderedRobotIndex = safeIdx; 
+    return;
+  }
+  
   const cw = robotCanvas.width;
   const ch = robotCanvas.height;
   const iw = img.naturalWidth;
   const ih = img.naturalHeight;
 
   robotCtx.imageSmoothingEnabled = true;
-  robotCtx.imageSmoothingQuality = 'high';
+  robotCtx.imageSmoothingQuality = 'medium';
 
   const scale = Math.max(cw / iw, ch / ih);
   const drawW = iw * scale;
   const drawH = ih * scale;
 
-  // Position robot at ~60% of viewport width
   const targetX = 0.60 * cw;
   const robotInImage = 0.50 * drawW;
   const offsetX = Math.max(cw - drawW, Math.min(0, targetX - robotInImage));
@@ -175,12 +221,29 @@ function drawRobotFrame(index) {
 
   robotCtx.clearRect(0, 0, cw, ch);
   robotCtx.drawImage(img, offsetX, offsetY, drawW, drawH);
+  
+  animState.renderedRobotIndex = safeIdx;
 }
 
 const animState = {
-  robotIndex: 0,
+  targetRobotIndex: 0,
+  renderedRobotIndex: -1,
+  renderRaf: null,
 };
 
+function startRobotRenderLoop() {
+  function loop() {
+    if (document.hidden) {
+      animState.renderRaf = requestAnimationFrame(loop);
+      return;
+    }
+    if (animState.renderedRobotIndex !== Math.round(animState.targetRobotIndex)) {
+      drawRobotFrame(animState.targetRobotIndex);
+    }
+    animState.renderRaf = requestAnimationFrame(loop);
+  }
+  animState.renderRaf = requestAnimationFrame(loop);
+}
 
 /* ============================================================
    ENTRANCE ANIMATION
@@ -222,6 +285,9 @@ function playEntrance() {
    MASTER SCROLL CHOREOGRAPHY
    ============================================================ */
 function setupScrollAnimation() {
+  let lastQExit = -1;
+  let lastIntro = -1;
+
   ScrollTrigger.create({
     trigger: '#scroll-container',
     start: 'top top',
@@ -230,28 +296,21 @@ function setupScrollAnimation() {
     onUpdate: (self) => {
       const p = self.progress;
 
-      // Scrub robot frames smoothly across scroll (0 to 189)
-      animState.robotIndex = Math.min(totalRobotFrames - 1, p * (totalRobotFrames - 1));
-      drawRobotFrame(animState.robotIndex);
+      // Scrub robot frames (Render loop handles drawing)
+      animState.targetRobotIndex = Math.min(totalRobotFrames - 1, p * (totalRobotFrames - 1));
 
       // Section 1: Quote text exit (0.18 -> 0.40)
-      if (p < 0.18) {
-        gsap.set(sectionQuote, { opacity: 1, y: 0 });
-      } else if (p <= 0.40) {
-        const qExitProg = (p - 0.18) / 0.22;
-        gsap.set(sectionQuote, { opacity: 1 - qExitProg, y: -28 * qExitProg });
-      } else {
-        gsap.set(sectionQuote, { opacity: 0 });
+      let currentQExit = p < 0.18 ? 0 : (p <= 0.40 ? (p - 0.18) / 0.22 : 1);
+      if (Math.abs(currentQExit - lastQExit) > 0.005) {
+        gsap.set(sectionQuote, { opacity: 1 - currentQExit, y: -28 * currentQExit });
+        lastQExit = currentQExit;
       }
 
       // Section 2: Intro text entrance (0.48 -> 0.72)
-      if (p < 0.48) {
-        gsap.set(sectionIntro, { opacity: 0, y: 30 });
-      } else if (p <= 0.72) {
-        const introProg = (p - 0.48) / 0.24;
-        gsap.set(sectionIntro, { opacity: introProg, y: 30 * (1 - introProg) });
-      } else {
-        gsap.set(sectionIntro, { opacity: 1, y: 0 });
+      let currentIntro = p < 0.48 ? 0 : (p <= 0.72 ? (p - 0.48) / 0.24 : 1);
+      if (Math.abs(currentIntro - lastIntro) > 0.005) {
+        gsap.set(sectionIntro, { opacity: currentIntro, y: 30 * (1 - currentIntro) });
+        lastIntro = currentIntro;
       }
 
       // Nav link state
@@ -280,9 +339,13 @@ function setupScrollAnimation() {
 async function init() {
   resizeCanvases();
 
+  let resizeTimeout;
   window.addEventListener('resize', () => {
-    resizeCanvases();
-    drawRobotFrame(animState.robotIndex);
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      resizeCanvases();
+      animState.renderedRobotIndex = -1; // force redraw
+    }, 100);
   });
 
   // Preload robot frames first for instant startup
@@ -290,6 +353,7 @@ async function init() {
 
   // Draw initial frame
   drawRobotFrame(0);
+  startRobotRenderLoop();
 
   // Hide loading screen
   loader.classList.add('hidden');

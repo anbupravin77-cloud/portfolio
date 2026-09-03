@@ -59,21 +59,44 @@ export class ContactHandshakeTransition {
     if (this.framesLoaded > 0) return Promise.resolve();
 
     return new Promise((resolve) => {
-      let loaded = 0;
+      const TARGET_PRIORITY = 30; // Prioritize first 30 frames
+      let priorityLoaded = 0;
+      let totalLoaded = 0;
+      
+      const loadQueue = [];
       for (let i = 1; i <= this.totalFrames; i++) {
+        loadQueue.push(i);
+      }
+      
+      const CONCURRENT = 6;
+      let activeLoads = 0;
+      
+      const loadNext = () => {
+        if (loadQueue.length === 0 || activeLoads >= CONCURRENT) return;
+        
+        const i = loadQueue.shift();
+        activeLoads++;
+        
         const img = new Image();
-        // ezgif-frame-001.png
         const frameNum = String(i).padStart(3, '0');
         img.src = `/hands/ezgif-frame-${frameNum}.png`;
         img.onload = img.onerror = () => {
-          loaded++;
-          this.framesLoaded = loaded;
-          if (loaded === this.totalFrames) {
-            resolve();
+          this.frames[i] = img;
+          activeLoads--;
+          totalLoaded++;
+          this.framesLoaded = totalLoaded;
+          
+          if (priorityLoaded < TARGET_PRIORITY) {
+            priorityLoaded++;
+            if (priorityLoaded >= Math.min(TARGET_PRIORITY, this.totalFrames)) resolve();
           }
+          
+          loadNext();
         };
-        this.frames[i] = img;
-      }
+        loadNext();
+      };
+      
+      for (let k = 0; k < CONCURRENT; k++) loadNext();
     });
   }
 
@@ -190,7 +213,19 @@ export class ContactHandshakeTransition {
   drawFrame(index) {
     if (!this.ctx || !this.canvas) return;
     
-    const img = this.frames[index];
+    let img = this.frames[index];
+    
+    // Nearest neighbor fallback if frame isn't loaded
+    if (!img || !img.complete || img.naturalWidth === 0) {
+      for (let offset = 1; offset <= this.totalFrames; offset++) {
+        const downIdx = index - offset;
+        if (downIdx > 0 && this.frames[downIdx] && this.frames[downIdx].complete && this.frames[downIdx].naturalWidth > 0) {
+          img = this.frames[downIdx];
+          break;
+        }
+      }
+    }
+    
     if (!img || !img.complete || img.naturalWidth === 0) return;
 
     // Use internal dimensions (1280x720) for rendering.
@@ -199,7 +234,7 @@ export class ContactHandshakeTransition {
     const ch = this.canvas.height;
     
     this.ctx.imageSmoothingEnabled = true;
-    this.ctx.imageSmoothingQuality = 'high';
+    this.ctx.imageSmoothingQuality = 'medium';
     
     this.ctx.clearRect(0, 0, cw, ch);
     this.ctx.drawImage(img, 0, 0, cw, ch);
