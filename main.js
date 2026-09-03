@@ -178,7 +178,8 @@ function getNearestLoadedFrame(targetIdx) {
   if (robotImages[targetIdx] && robotImages[targetIdx].complete && robotImages[targetIdx].naturalWidth > 0) {
     return { img: robotImages[targetIdx], idx: targetIdx };
   }
-  for (let offset = 1; offset <= totalRobotFrames; offset++) {
+  const maxSearch = Math.min(10, totalRobotFrames); // Limit search radius
+  for (let offset = 1; offset <= maxSearch; offset++) {
     const downIdx = targetIdx - offset;
     if (downIdx >= 0 && robotImages[downIdx] && robotImages[downIdx].complete && robotImages[downIdx].naturalWidth > 0) {
       return { img: robotImages[downIdx], idx: downIdx };
@@ -187,6 +188,10 @@ function getNearestLoadedFrame(targetIdx) {
     if (upIdx < totalRobotFrames && robotImages[upIdx] && robotImages[upIdx].complete && robotImages[upIdx].naturalWidth > 0) {
       return { img: robotImages[upIdx], idx: upIdx };
     }
+  }
+  // Fallback to currently rendered if available
+  if (animState.renderedRobotIndex >= 0 && robotImages[animState.renderedRobotIndex]) {
+    return { img: robotImages[animState.renderedRobotIndex], idx: animState.renderedRobotIndex };
   }
   return null;
 }
@@ -198,7 +203,7 @@ function drawRobotFrame(index) {
   
   const { img, idx } = nearest;
   if (animState.renderedRobotIndex === idx) {
-    animState.renderedRobotIndex = safeIdx; 
+    animState.renderedRobotIndex = safeIdx; // Update logical index even if image is same
     return;
   }
   
@@ -226,23 +231,18 @@ function drawRobotFrame(index) {
 }
 
 const animState = {
-  targetRobotIndex: 0,
   renderedRobotIndex: -1,
   renderRaf: null,
 };
 
-function startRobotRenderLoop() {
-  function loop() {
-    if (document.hidden) {
-      animState.renderRaf = requestAnimationFrame(loop);
-      return;
-    }
-    if (animState.renderedRobotIndex !== Math.round(animState.targetRobotIndex)) {
-      drawRobotFrame(animState.targetRobotIndex);
-    }
-    animState.renderRaf = requestAnimationFrame(loop);
+function scheduleRobotRender(targetIdx) {
+  const safeIdx = Math.max(0, Math.min(totalRobotFrames - 1, Math.round(targetIdx)));
+  if (animState.renderedRobotIndex !== safeIdx && !animState.renderRaf) {
+    animState.renderRaf = requestAnimationFrame(() => {
+      drawRobotFrame(safeIdx);
+      animState.renderRaf = null;
+    });
   }
-  animState.renderRaf = requestAnimationFrame(loop);
 }
 
 /* ============================================================
@@ -288,6 +288,21 @@ function setupScrollAnimation() {
   let lastQExit = -1;
   let lastIntro = -1;
 
+  // 1. Robot Trigger (Instant 1:1 scrub for absolute sync)
+  ScrollTrigger.create({
+    trigger: '#scroll-container',
+    start: 'top top',
+    end: 'bottom bottom',
+    scrub: true, // No delay! Direct sync to scrollbar
+    onUpdate: (self) => {
+      const p = self.progress;
+      // Map exact float progress to frame index and schedule render
+      const exactIndex = p * (totalRobotFrames - 1);
+      scheduleRobotRender(exactIndex);
+    },
+  });
+
+  // 2. UI/Text Trigger (Interpolated scrub for buttery typography)
   ScrollTrigger.create({
     trigger: '#scroll-container',
     start: 'top top',
@@ -295,9 +310,6 @@ function setupScrollAnimation() {
     scrub: 0.35,
     onUpdate: (self) => {
       const p = self.progress;
-
-      // Scrub robot frames (Render loop handles drawing)
-      animState.targetRobotIndex = Math.min(totalRobotFrames - 1, p * (totalRobotFrames - 1));
 
       // Section 1: Quote text exit (0.18 -> 0.40)
       let currentQExit = p < 0.18 ? 0 : (p <= 0.40 ? (p - 0.18) / 0.22 : 1);
@@ -320,7 +332,7 @@ function setupScrollAnimation() {
         setActiveNavLink('about');
       }
 
-      // Fade out initial scroll hint on any scroll
+      // Fade out initial scroll hint
       if (p > 0.03) {
         scrollHint.classList.add('fade-out');
         scrollHint.classList.remove('visible');
@@ -353,7 +365,6 @@ async function init() {
 
   // Draw initial frame
   drawRobotFrame(0);
-  startRobotRenderLoop();
 
   // Hide loading screen
   loader.classList.add('hidden');
