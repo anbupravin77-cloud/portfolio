@@ -4,6 +4,11 @@ import { ContactHandshakeTransition } from './ContactHandshakeTransition.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Force scroll to top on page reload
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+window.scrollTo(0, 0);
 /* ============================================================
    DOM REFERENCES
    ============================================================ */
