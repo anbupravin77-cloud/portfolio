@@ -388,8 +388,8 @@ async function init() {
   if (projectCards.length > 1 && window.innerWidth > 768) {
     ScrollTrigger.create({
       trigger: projectCards[1],
-      start: 'top 120px',
-      end: 'top top',
+      start: 'top 75%',
+      end: 'top 100px',
       scrub: true,
       animation: gsap.to(projectCards[0], { scale: 0.96, filter: 'brightness(0.5)', ease: 'none' })
     });
@@ -397,10 +397,19 @@ async function init() {
   if (projectCards.length > 2 && window.innerWidth > 768) {
     ScrollTrigger.create({
       trigger: projectCards[2],
-      start: 'top 120px',
-      end: 'top top',
+      start: 'top 75%',
+      end: 'top 100px',
       scrub: true,
       animation: gsap.to([projectCards[0], projectCards[1]], { scale: 0.92, filter: 'brightness(0.3)', ease: 'none' })
+    });
+  }
+  if (projectCards.length > 3 && window.innerWidth > 768) {
+    ScrollTrigger.create({
+      trigger: projectCards[3],
+      start: 'top 75%',
+      end: 'top 100px',
+      scrub: true,
+      animation: gsap.to([projectCards[0], projectCards[1], projectCards[2]], { scale: 0.88, filter: 'brightness(0.2)', ease: 'none' })
     });
   }
 
