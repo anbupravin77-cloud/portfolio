@@ -118,14 +118,37 @@ let robotLoadedCount = 0;
 
 
 /* ============================================================
-   PRELOADING (Progressive)
+   PRELOADING (Progressive & Interlaced)
    ============================================================ */
 function preloadRobotFrames() {
   return new Promise(resolve => {
-    const INITIAL_BATCH = 15;
+    const loadQueue = [];
+    const added = new Set();
+    
+    // Interlaced loading passes: load coarse frames first across the entire timeline
+    const passes = [16, 8, 4, 2, 1];
+    
+    for (const step of passes) {
+      for (let i = 0; i < totalRobotFrames; i += step) {
+        if (!added.has(i)) {
+          loadQueue.push([i, robotFramePaths[i]]);
+          added.add(i);
+        }
+      }
+    }
+    
+    // Catch any remaining frames just in case
+    for (let i = 0; i < totalRobotFrames; i++) {
+      if (!added.has(i)) {
+        loadQueue.push([i, robotFramePaths[i]]);
+        added.add(i);
+      }
+    }
+
+    // Resolve after the first coarse pass (approx 12 frames) to show the homepage immediately
+    const INITIAL_BATCH = 12;
     let initialLoaded = 0;
     const targetInitial = Math.min(INITIAL_BATCH, totalRobotFrames);
-    const loadQueue = [...robotFramePaths.entries()]; 
     const CONCURRENT = 6;
     let activeLoads = 0;
 
@@ -183,7 +206,8 @@ function getNearestLoadedFrame(targetIdx) {
   if (robotImages[targetIdx] && robotImages[targetIdx].complete && robotImages[targetIdx].naturalWidth > 0) {
     return { img: robotImages[targetIdx], idx: targetIdx };
   }
-  const maxSearch = Math.min(10, totalRobotFrames); // Limit search radius
+  // Since we load interlaced, search outward across the entire timeline to find the nearest loaded frame
+  const maxSearch = totalRobotFrames; 
   for (let offset = 1; offset <= maxSearch; offset++) {
     const downIdx = targetIdx - offset;
     if (downIdx >= 0 && robotImages[downIdx] && robotImages[downIdx].complete && robotImages[downIdx].naturalWidth > 0) {
