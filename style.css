@@ -813,19 +813,37 @@ a {
   min-height: 600px;
   max-height: 900px;
   margin-bottom: 40px;
-  background: #111111;
-  border: 1px solid rgba(215, 226, 234, 0.08);
+  background: rgba(17, 17, 17, 0.35); /* Glassmorphism base */
+  backdrop-filter: blur(24px); /* Frosted glass effect */
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 40px;
-  padding: 40px;
-  overflow: hidden;
-  box-shadow: 0 -10px 40px rgba(0,0,0,0.25);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden; /* Ensure inner glow doesn't spill */
   transform-origin: top center;
   will-change: transform, filter, border-color;
-  transition: border-color 0.4s ease;
+}
+
+.project-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 40px;
+  background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.04), transparent 40%);
+  opacity: 0;
+  transition: opacity 0.5s;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .project-card:hover {
-  border-color: rgba(215, 226, 234, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), 0 0 40px rgba(255, 255, 255, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.project-card:hover::before {
+  opacity: 1;
 }
 
 /* Stacking offset for native sticky behavior */
@@ -835,6 +853,8 @@ a {
 #project-card-4 { z-index: 13; margin-top: 15vh; }
 
 .project-card-inner {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -930,8 +950,9 @@ a {
 }
 
 .project-btn:hover {
-  background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.6);
+  box-shadow: 0 0 15px rgba(255,255,255,0.1);
 }
 
 .project-btn:hover svg {
@@ -962,7 +983,9 @@ a {
   border-radius: 24px;
   overflow: hidden;
   background: #161616;
-  border: 1px solid rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s ease, border-color 0.6s ease;
 }
 
 /* Temporary placeholders using subtle gradients */
@@ -985,13 +1008,27 @@ a {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), filter 0.7s ease;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s ease;
+}
+
+.project-card:hover .project-img-wrapper {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.7), 0 10px 20px rgba(0,0,0,0.3);
+  border-color: rgba(255,255,255,0.15);
+}
+
+.project-card:hover .project-media-left .project-img-wrapper:nth-child(1) {
+  transform: translateY(-4px) rotate(-1deg);
+}
+
+.project-card:hover .project-media-left .project-img-wrapper:nth-child(2) {
+  transform: translateY(-12px) rotate(1deg);
 }
 
 .project-card:hover .project-img-wrapper .img-placeholder,
 .project-card:hover .project-img-wrapper .project-img {
-  transform: scale(1.03);
-  filter: brightness(1.05);
+  transform: scale(1.06);
+  filter: brightness(1.1);
 }
 
 @media (max-width: 1024px) {
