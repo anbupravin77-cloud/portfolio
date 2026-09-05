@@ -163,9 +163,9 @@ function preloadRobotFrames() {
    CANVAS SIZING & HIGH-DPI SHARPNESS
    ============================================================ */
 function resizeCanvases() {
-  // Cap at 1.5 to prevent massive memory usage on 2x/3x screens
+  // Cap at 1.5 on mobile to balance sharpness and memory, 2 on desktop
   const isMobile = window.innerWidth <= 768;
-  const maxDpr = isMobile ? 1 : 1.5;
+  const maxDpr = isMobile ? 1.5 : 2;
   const dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
   const w = window.innerWidth;
   const h = window.innerHeight;
@@ -224,9 +224,22 @@ function drawRobotFrame(index) {
   const drawW = iw * scale;
   const drawH = ih * scale;
 
-  const targetX = 0.60 * cw;
+  let targetX = 0.60 * cw;
+  const logicalWidth = window.innerWidth;
+  if (logicalWidth <= 768) {
+    // Mobile: center the robot
+    targetX = 0.50 * cw;
+  } else if (logicalWidth <= 1024) {
+    // Tablet: slightly offset
+    targetX = 0.55 * cw;
+  }
+
   const robotInImage = 0.50 * drawW;
-  const offsetX = Math.max(cw - drawW, Math.min(0, targetX - robotInImage));
+  
+  // Constrain offsetX so we don't draw outside the image bounds
+  let offsetX = targetX - robotInImage;
+  offsetX = Math.min(0, Math.max(cw - drawW, offsetX));
+  
   const offsetY = (ch - drawH) / 2;
 
   robotCtx.clearRect(0, 0, cw, ch);
@@ -361,7 +374,9 @@ async function init() {
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => {
       resizeCanvases();
+      const currentIdx = Math.max(0, animState.renderedRobotIndex);
       animState.renderedRobotIndex = -1; // force redraw
+      drawRobotFrame(currentIdx);
     }, 100);
   });
 

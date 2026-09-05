@@ -1,0 +1,8 @@
+{
+  "name": "Anbu Pravin Portfolio",
+  "description": "Personal portfolio website of Anbu Pravin featuring interactive animations, digital storytelling, and contact transitions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
