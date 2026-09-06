@@ -12,7 +12,10 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
+    "@studio-freight/lenis": "^1.0.42",
     "gsap": "^3.12.7",
-    "ogl": "^1.0.11"
+    "ogl": "^1.0.11",
+    "three": "^0.185.1",
+    "vanilla-tilt": "^1.8.1"
   }
 }

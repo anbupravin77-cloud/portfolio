@@ -35,6 +35,7 @@ export class ContactHandshakeTransition {
     this.state = 'idle'; // 'idle' | 'submitting' | 'animating' | 'complete'
     this.frames = [];
     this.totalFrames = 180;
+    this.frameStep = 3;
     this.framesLoaded = 0;
     this.currentFrame = 1;
     this.rafId = null;
@@ -64,7 +65,7 @@ export class ContactHandshakeTransition {
       let totalLoaded = 0;
       
       const loadQueue = [];
-      for (let i = 1; i <= this.totalFrames; i++) {
+      for (let i = 1; i <= this.totalFrames; i += this.frameStep) {
         loadQueue.push(i);
       }
       
@@ -102,6 +103,22 @@ export class ContactHandshakeTransition {
 
   setupForm() {
     if (!this.form) return;
+    
+    // Setup blur validation
+    const inputs = this.form.querySelectorAll('.trust-input, .trust-textarea, .form-input, .form-textarea');
+    inputs.forEach(input => {
+      input.addEventListener('blur', (e) => {
+        this.validateField(e.target);
+      });
+      input.addEventListener('input', (e) => {
+        const field = e.target.closest('.trust-field, .form-field');
+        if (field) {
+          field?.classList?.remove('invalid', 'valid');
+        }
+        this.clearError();
+      });
+    });
+
     this.form.addEventListener('submit', (e) => {
       e.preventDefault();
       this.handleFormSubmit();
@@ -115,66 +132,159 @@ export class ContactHandshakeTransition {
     });
   }
 
-  showError(msg) {
-    if (!this.errorDisplay) return;
-    this.errorDisplay.textContent = msg;
-    this.errorDisplay.classList.add('visible');
+  showError(msg, inputElement = null) {
+    if (this.errorDisplay) {
+      this.errorDisplay.textContent = msg;
+      this.errorDisplay?.classList?.add('visible');
+    }
+    if (inputElement) {
+      const field = inputElement.closest('.trust-field, .form-field');
+      if (field) {
+        field?.classList?.remove('valid');
+        field?.classList?.add('invalid');
+      }
+      inputElement.focus();
+    }
   }
 
   clearError() {
     if (!this.errorDisplay) return;
     this.errorDisplay.textContent = '';
-    this.errorDisplay.classList.remove('visible');
+    this.errorDisplay?.classList?.remove('visible');
+  }
+
+  validateField(inputElement) {
+    const field = inputElement.closest('.trust-field, .form-field');
+    if (!field) return true;
+    
+    // Website is optional
+    if (inputElement.id === 'contact-website' && inputElement.value.trim() === '') {
+      field?.classList?.remove('invalid', 'valid');
+      return true;
+    }
+
+    const value = inputElement.value.trim();
+    let isValid = true;
+
+    if (inputElement.id === 'contact-name' && !value) {
+      isValid = false;
+    } else if (inputElement.id === 'contact-email') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!value || !emailRegex.test(value)) {
+        isValid = false;
+      }
+    } else if (inputElement.id === 'contact-message' && (!value || value.length < 5)) {
+      isValid = false;
+    } else if (inputElement.id === 'contact-company' && !value) {
+       // Optional field, no validation needed if empty
+    }
+
+    if (value !== '' || inputElement.required) {
+      if (isValid) {
+        field?.classList?.remove('invalid');
+        field?.classList?.add('valid');
+      } else {
+        field?.classList?.remove('valid');
+        field?.classList?.add('invalid');
+      }
+    }
+    
+    return isValid;
   }
 
   validateForm() {
     const nameInput = this.form.querySelector('#contact-name');
     const emailInput = this.form.querySelector('#contact-email');
+    const subjectInput = this.form.querySelector('#contact-subject');
     const msgInput = this.form.querySelector('#contact-message');
 
     const name = nameInput ? nameInput.value.trim() : '';
     const email = emailInput ? emailInput.value.trim() : '';
+    const subject = subjectInput ? subjectInput.value.trim() : '';
     const message = msgInput ? msgInput.value.trim() : '';
+    
+    // Clear all previous
+    const allFields = this.form.querySelectorAll('.trust-field, .form-field');
+    allFields.forEach(f => f?.classList?.remove('invalid', 'valid'));
 
     if (!name) {
-      this.showError('Please enter your name.');
-      if (nameInput) nameInput.focus();
+      this.showError('Please enter your name.', nameInput);
       return false;
+    } else if (nameInput) {
+      nameInput.closest('.trust-field, .form-field')?.classList?.add('valid');
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
-      this.showError('Please enter a valid email address.');
-      if (emailInput) emailInput.focus();
+      this.showError('Please enter a valid email address.', emailInput);
       return false;
+    } else if (emailInput) {
+      emailInput.closest('.trust-field, .form-field')?.classList?.add('valid');
     }
 
     if (!message || message.length < 5) {
-      this.showError('Please enter a message (at least 5 characters).');
-      if (msgInput) msgInput.focus();
+      this.showError('Please enter a message (at least 5 characters).', msgInput);
       return false;
+    } else if (msgInput) {
+      msgInput.closest('.trust-field, .form-field')?.classList?.add('valid');
     }
 
     this.clearError();
-    return { name, email, message };
+    return { name, email, subject, message };
+  }
+
+  async sendEmailForwarding(formData) {
+    try {
+      const response = await fetch('https://formsubmit.co/ajax/anbupravin77@gmail.com', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          _subject: formData.subject ? `[Portfolio] ${formData.subject}` : `New Portfolio Inquiry from ${formData.name}`,
+          message: formData.message,
+          _template: 'table',
+          _captcha: 'false'
+        })
+      });
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      console.warn('Background email forwarding note:', err);
+      return null;
+    }
   }
 
   async handleFormSubmit() {
     if (this.state !== 'idle') return;
-
     const formData = this.validateForm();
     if (!formData) return;
 
     this.state = 'submitting';
+
+    // Dispatch free email forwarding directly to anbupravin77@gmail.com
+    this.sendEmailForwarding(formData);
+
+    // Populate direct mailto link for seamless direct email client fallback
+    const mailtoBtn = document.getElementById('thankyou-mailto-btn');
+    if (mailtoBtn) {
+      const sub = encodeURIComponent(formData.subject || `Inquiry from ${formData.name}`);
+      const body = encodeURIComponent(`Hi Anbu,\n\n${formData.message}\n\nFrom: ${formData.name} (${formData.email})`);
+      mailtoBtn.href = `mailto:anbupravin77@gmail.com?subject=${sub}&body=${body}`;
+    }
+
     if (this.submitBtn) {
       this.submitBtn.disabled = true;
-      this.submitBtn.classList.add('submitting');
+      this.submitBtn?.classList?.add('submitting');
       const btnText = this.submitBtn.querySelector('.btn-text');
-      if (btnText) btnText.textContent = 'SENDING...';
+      if (btnText) btnText.textContent = 'FORWARDING MESSAGE...';
     }
 
     if (this.srAnnouncer) {
-      this.srAnnouncer.textContent = 'Your message was sent successfully.';
+      this.srAnnouncer.textContent = 'Your message was sent successfully to anbupravin77@gmail.com.';
     }
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -183,7 +293,33 @@ export class ContactHandshakeTransition {
       return;
     }
 
-    this.startTransition();
+    // Wait until all frames (180 / 3 = 60) are loaded
+    const targetLoaded = Math.floor(this.totalFrames / this.frameStep);
+    
+    // Call preloadFrames in case it hasn't been called
+    this.preloadFrames();
+
+    let waitTime = 0;
+    const waitInterval = setInterval(() => {
+      waitTime += 100;
+      
+      // If loaded, or if it takes longer than 8 seconds (fallback to skip)
+      if (this.framesLoaded >= targetLoaded || waitTime > 8000) {
+        clearInterval(waitInterval);
+        
+        if (this.submitBtn) {
+          const btnText = this.submitBtn.querySelector('.btn-text');
+          if (btnText) btnText.textContent = 'SENDING...';
+        }
+        
+        if (this.framesLoaded >= targetLoaded) {
+          this.startTransition();
+        } else {
+          // Fallback if network is too slow
+          this.skipToComplete();
+        }
+      }
+    }, 100);
   }
 
   startTransition() {
@@ -191,7 +327,7 @@ export class ContactHandshakeTransition {
 
     // 1. Dissolve form layer
     if (this.formLayer) {
-      this.formLayer.classList.add('dissolving');
+      this.formLayer?.classList?.add('dissolving');
     }
 
     // 2. Wait a moment, then prepare canvas and crossfade
@@ -199,8 +335,8 @@ export class ContactHandshakeTransition {
       // Ensure canvas is sized correctly and first frame is drawn before crossfade
       this.drawFrame(1);
       
-      if (this.staticHands) this.staticHands.classList.add('hidden');
-      if (this.canvas) this.canvas.classList.add('visible');
+      if (this.staticHands) this.staticHands?.classList?.add('hidden');
+      if (this.canvas) this.canvas?.classList?.add('visible');
 
       // 3. Start playback shortly after crossfade begins
       setTimeout(() => {
@@ -251,19 +387,19 @@ export class ContactHandshakeTransition {
       const elapsed = timestamp - lastTime;
 
       if (elapsed > frameDuration) {
-        this.currentFrame++;
+        this.currentFrame += this.frameStep;
         lastTime = timestamp;
 
         if (this.currentFrame <= this.totalFrames) {
           this.drawFrame(this.currentFrame);
           
           // Trigger bloom near contact (frame 95)
-          if (this.currentFrame === 95 && this.bloom) {
-            this.bloom.classList.add('active');
+          if (this.currentFrame >= 93 && this.currentFrame <= 97 && this.bloom) {
+            this.bloom?.classList?.add('active');
           }
           // Remove bloom later (frame 140)
-          if (this.currentFrame === 140 && this.bloom) {
-            this.bloom.classList.remove('active');
+          if (this.currentFrame >= 138 && this.currentFrame <= 142 && this.bloom) {
+            this.bloom?.classList?.remove('active');
           }
         }
       }
@@ -284,7 +420,7 @@ export class ContactHandshakeTransition {
     // Hold final frame, reveal thank you text
     setTimeout(() => {
       if (this.thankYouLayer) {
-        this.thankYouLayer.classList.add('revealed');
+        this.thankYouLayer?.classList?.add('revealed');
       }
     }, 300);
   }
@@ -294,11 +430,11 @@ export class ContactHandshakeTransition {
     this.currentFrame = this.totalFrames;
     this.drawFrame(this.currentFrame);
     
-    if (this.staticHands) this.staticHands.classList.add('hidden');
-    if (this.canvas) this.canvas.classList.add('visible');
+    if (this.staticHands) this.staticHands?.classList?.add('hidden');
+    if (this.canvas) this.canvas?.classList?.add('visible');
     
-    if (this.formLayer) this.formLayer.classList.add('dissolving');
-    if (this.thankYouLayer) this.thankYouLayer.classList.add('revealed');
+    if (this.formLayer) this.formLayer?.classList?.add('dissolving');
+    if (this.thankYouLayer) this.thankYouLayer?.classList?.add('revealed');
   }
 
   resetScene() {
@@ -317,18 +453,18 @@ export class ContactHandshakeTransition {
     
     if (this.submitBtn) {
       this.submitBtn.disabled = false;
-      this.submitBtn.classList.remove('submitting');
+      this.submitBtn?.classList?.remove('submitting');
       const btnText = this.submitBtn.querySelector('.btn-text');
       if (btnText) btnText.textContent = 'SEND MESSAGE';
     }
 
     // Reset Layers
-    if (this.bloom) this.bloom.classList.remove('active');
-    if (this.thankYouLayer) this.thankYouLayer.classList.remove('revealed');
-    if (this.canvas) this.canvas.classList.remove('visible');
-    if (this.staticHands) this.staticHands.classList.remove('hidden');
+    if (this.bloom) this.bloom?.classList?.remove('active');
+    if (this.thankYouLayer) this.thankYouLayer?.classList?.remove('revealed');
+    if (this.canvas) this.canvas?.classList?.remove('visible');
+    if (this.staticHands) this.staticHands?.classList?.remove('hidden');
     
-    if (this.formLayer) this.formLayer.classList.remove('dissolving');
+    if (this.formLayer) this.formLayer?.classList?.remove('dissolving');
   }
 
   destroy() {

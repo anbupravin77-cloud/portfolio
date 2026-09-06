@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Anbu Pravin — Frontend Developer Student. Building digital experiences that are different." />
-  <title>Anbu Pravin | Frontend Developer</title>
+  <meta name="description" content="Portfolio of Anbu Pravin, Computer Science student at Thiagarajar College of Engineering, Madurai. Specializing in React, JavaScript, Python, Progressive Web Apps, and accessible user experiences." />
+  <title>Anbu Pravin — Portfolio</title>
 
   <!-- Google Fonts: Outfit + Space Grotesk + Playfair Display -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -14,6 +14,39 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
+  <div id="cursor-trail" class="cursor-trail" aria-hidden="true"></div>
+  
+
+  <!-- Ambient Global Mesh Canvas and Premium Noise Texture -->
+  <canvas id="mesh-canvas" aria-hidden="true"></canvas>
+  <div id="noise-overlay" aria-hidden="true"></div>
+
+  
+  <div class="scroll-progress-container" aria-hidden="true">
+    <div class="scroll-progress-track">
+      <div class="scroll-progress-thumb"></div>
+    </div>
+    <div class="scroll-progress-dots">
+      <div class="progress-dot active" data-target="home" title="Home"></div>
+      <div class="progress-dot" data-target="about" title="Philosophy & Summary"></div>
+      <div class="progress-dot" data-target="skills" title="Tech Stacks"></div>
+      <div class="progress-dot" data-target="education" title="Education Journey"></div>
+      <div class="progress-dot" data-target="work" title="Selected Projects"></div>
+      <div class="progress-dot" data-target="honors" title="Honors & Certifications"></div>
+      <div class="progress-dot" data-target="services" title="Services & Opportunities"></div>
+      <div class="progress-dot" data-target="contact" title="Contact"></div>
+    </div>
+  </div>
+
+  <!-- Loading Screen -->
+  <div id="loader" class="loader">
+    <div class="loader-inner">
+      <div class="loader-text">Initializing</div>
+      <div class="loader-bar-track">
+        <div id="loader-bar" class="loader-bar-fill"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- ===== HEADER / NAVBAR ===== -->
   <header id="site-header" class="site-header">
@@ -27,13 +60,20 @@
       <!-- Nav Pill (center) -->
       <nav id="nav-pill" class="nav-pill">
         <a href="#home" class="nav-link active" data-section="home">Home</a>
-
         <a href="#about" class="nav-link" data-section="about">About</a>
+        <a href="#skills" class="nav-link" data-section="skills">Tech Stacks</a>
+        <a href="#education" class="nav-link" data-section="education">Education</a>
+        <a href="#work" class="nav-link" data-section="work">Projects</a>
+        <a href="#honors" class="nav-link" data-section="honors">Honors</a>
+        <a href="#services" class="nav-link" data-section="services">Services</a>
         <a href="#contact" class="nav-link" data-section="contact">Contact</a>
       </nav>
 
-      <!-- CTA -->
-      <a href="#contact" class="header-cta" id="header-cta">Let's Talk</a>
+      <!-- CTA (Right) -->
+      <div class="header-right-controls">
+        <a href="#contact" class="header-cta" id="header-cta">Get in Touch</a>
+      </div>
+
 
       <!-- Mobile Hamburger -->
       <button id="hamburger" class="hamburger" aria-label="Toggle navigation">
@@ -47,67 +87,791 @@
     <!-- Mobile Nav Drawer -->
     <div id="mobile-nav" class="mobile-nav">
       <a href="#home" class="mobile-nav-link" data-section="home">Home</a>
-
       <a href="#about" class="mobile-nav-link" data-section="about">About</a>
+      <a href="#skills" class="mobile-nav-link" data-section="skills">Tech Stacks</a>
+      <a href="#education" class="mobile-nav-link" data-section="education">Education</a>
+      <a href="#work" class="mobile-nav-link" data-section="work">Projects</a>
+      <a href="#honors" class="mobile-nav-link" data-section="honors">Honors & Certifications</a>
+      <a href="#services" class="mobile-nav-link" data-section="services">Services</a>
       <a href="#contact" class="mobile-nav-link" data-section="contact">Contact</a>
     </div>
   </header>
 
-  <!-- Loading Screen -->
-  <div id="loader" class="loader">
-    <div class="loader-inner">
-      <div class="loader-robot-icon">🤖</div>
-      <div class="loader-text">Loading experience</div>
-      <div class="loader-bar-track">
-        <div id="loader-bar" class="loader-bar-fill"></div>
-      </div>
-      <div id="loader-percent" class="loader-percent">0%</div>
-    </div>
-  </div>
+  <!-- Interactive 3D Canvas -->
+  <canvas id="three-canvas" class="three-canvas" aria-hidden="true"></canvas>
 
-  <!-- Scroll hint -->
-  <div id="scroll-hint" class="scroll-hint">
-    <div class="scroll-hint-mouse">
-      <div class="scroll-hint-wheel"></div>
-    </div>
-    <span>Scroll to explore</span>
-  </div>
+  <!-- ===== HERO SCENE ===== -->
+  <section id="home" class="hero-scene" aria-label="Hero Section">
+    <div class="hero-container">
+      <div class="hero-content">
+        <div class="hero-greeting gs-reveal-hero">Hey there! I'm Anbu Pravin.</div>
+        <h1 class="hero-title">
+          <div class="hero-line-wrap"><span class="hero-line gs-reveal-hero">Digital</span></div>
+          <div class="hero-line-wrap"><span class="hero-line gs-reveal-hero">Experiences,</span></div>
+          <div class="hero-line-wrap"><span class="hero-line hero-italic gs-reveal-hero">Reimagined.</span></div>
+        </h1>
+        <p class="hero-subtitle gs-reveal-hero">
+          Computer Science student at Thiagarajar College of Engineering, Madurai. Building fast, accessible web applications with React, JavaScript, and Python.
+        </p>
 
-  <!-- Main scroll container — unified continuous scene transition -->
-  <div id="scroll-container" class="scroll-container">
-
-    <!-- Sticky viewport — pinned continuously while scrolling through Hero -> Cloud -> Hanging Nav -->
-    <div id="sticky-viewport" class="sticky-viewport">
-
-      <!-- Scene 1: Robot Canvas -->
-      <canvas id="robot-canvas" class="robot-canvas"></canvas>
-
-      <!-- Hero Text Overlay (left side) -->
-      <div id="text-overlay" class="text-overlay">
-
-        <!-- Section 1: Quote (visible during quiet phase) -->
-        <div id="section-quote" class="text-section section-quote">
-          <div class="quote-decoration">&ldquo;</div>
-          <h1 class="quote-text">Digital,<br /><span class="quote-highlight">but different.</span></h1>
-          <div class="quote-underline"></div>
+        <!-- Academic Highlight Badge -->
+        <div class="hero-credentials-row gs-reveal-hero">
+          <span class="hero-cred-badge"><span class="hero-cred-dot"></span>Current CGPA: 8.54 / 10</span>
         </div>
 
-        <!-- Section 2: Name + Role (visible during waving phase) -->
-        <div id="section-intro" class="text-section section-intro">
-          <p class="intro-greeting">Hey there! I'm</p>
-          <h2 class="intro-name">Anbu<br />Pravin</h2>
-          <div class="intro-role-badge">
-            <span class="role-dot"></span>
-            Frontend Developer Student
+        <div class="hero-actions gs-reveal-hero">
+          <a href="#work" class="hero-btn primary-btn">Explore Projects</a>
+          <a href="#contact" class="hero-btn secondary-btn">Get in Touch</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- Section Divider -->
+  <div class="section-divider-wrapper"><div class="section-divider gs-divider"></div></div>
+
+
+  <!-- ===== ABOUT SCENE — Editorial Layout ===== -->
+  <section id="about" class="about-scene" aria-label="About Section">
+    <div class="about-container">
+      <div class="about-header-wrap">
+        <span class="about-eyebrow scramble-text">PROFESSIONAL SUMMARY &amp; PHILOSOPHY</span>
+        <h2 class="about-heading scramble-text">
+          Building accessible, high-performance web applications that<br />
+          <span class="heading-italic">solve real-world problems.</span>
+        </h2>
+      </div>
+
+      <!-- Bento Grid Architecture -->
+      <div class="about-bento-grid">
+        <!-- Bento Card 1: Creative Thesis & Lead (Large Hero Bento) -->
+        <div class="bento-card bento-card-hero">
+          <div class="bento-card-inner">
+            <div class="bento-badge-row">
+              <span class="bento-pill">PROFESSIONAL SUMMARY</span>
+            </div>
+            <h3 class="bento-hero-title">
+              Computer Science Student &amp; Web Developer.
+            </h3>
+            <p class="about-lead">
+              Computer Science student at Thiagarajar College of Engineering, Madurai.
+            </p>
+            <p class="about-body">
+              I build fast, accessible web applications using React, JavaScript, and Python. Driven by clean design and practical engineering that solves real-world problems.
+            </p>
+            <div class="bento-tags-row">
+              <span class="bento-tag">React &amp; PWAs</span>
+              <span class="bento-tag">JavaScript &amp; Python</span>
+              <span class="bento-tag">Clean UX / UI</span>
+              <span class="bento-tag">TCE Madurai</span>
+            </div>
           </div>
         </div>
 
+        <!-- Bento Card 2: Live Interactive Canvas -->
+        <div class="bento-card bento-card-canvas">
+          <div class="bento-canvas-header">
+            <div class="bento-canvas-status">
+              <span class="status-indicator"></span>
+              <span class="status-label">LIVE GENERATIVE FIELD</span>
+            </div>
+            <span class="bento-canvas-hint">HOVER / DRAG TO SHAPE DYNAMICS</span>
+          </div>
+          <div class="bento-canvas-wrapper">
+            <canvas id="about-interactive-canvas" class="about-interactive-canvas" aria-label="Interactive particle and spring network showing creative coding"></canvas>
+          </div>
+          <div class="bento-canvas-footer">
+            <div class="canvas-metric">
+              <span class="metric-num">48</span>
+              <span class="metric-desc">Dynamic Nodes</span>
+            </div>
+            <div class="canvas-metric">
+              <span class="metric-num">60</span>
+              <span class="metric-desc">FPS Target</span>
+            </div>
+            <div class="canvas-metric">
+              <span class="metric-num">Spring</span>
+              <span class="metric-desc">Physics Engine</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bento Card 3: Academic & Engineering Metric Card -->
+        <div class="bento-card bento-card-metric">
+          <div class="bento-card-inner">
+            <span class="bento-mini-label">ACADEMIC &amp; TECH RIGOR</span>
+            <div class="bento-big-stat">
+              <span class="big-stat-number">8.54</span>
+              <span class="big-stat-unit">CGPA</span>
+            </div>
+            <h4 class="bento-metric-title">Engineering Discipline</h4>
+            <p class="bento-metric-desc">
+              Strong academic distinction (96.67% in Grade 12) combined with 60fps responsive interfaces, sub-100ms response times, and offline-first PWA caching.
+            </p>
+          </div>
+        </div>
+
+        <!-- Bento Card 4: The Triad of Craft - 01 Frontend & PWA -->
+        <div class="bento-card bento-pillar-card">
+          <div class="bento-card-inner">
+            <div class="pillar-header">
+              <span class="pillar-num">01</span>
+              <span class="pillar-category">FRONTEND</span>
+            </div>
+            <h4 class="pillar-title">Modern Web Apps</h4>
+            <p class="pillar-desc">
+              React SPAs, Progressive Web Apps with offline caching, responsive layouts, and Tailwind CSS component systems.
+            </p>
+          </div>
+        </div>
+
+        <!-- Bento Card 5: The Triad of Craft - 02 Intelligent Systems -->
+        <div class="bento-card bento-pillar-card">
+          <div class="bento-card-inner">
+            <div class="pillar-header">
+              <span class="pillar-num">02</span>
+              <span class="pillar-category">AI &amp; IOT</span>
+            </div>
+            <h4 class="pillar-title">Intelligent Systems</h4>
+            <p class="pillar-desc">
+              Python backend scripts, IoT hardware water sensor pipelines, and AI doubt-resolution integration.
+            </p>
+          </div>
+        </div>
+
+        <!-- Bento Card 6: The Triad of Craft - 03 UX & Inclusion -->
+        <div class="bento-card bento-pillar-card">
+          <div class="bento-card-inner">
+            <div class="pillar-header">
+              <span class="pillar-num">03</span>
+              <span class="pillar-category">DESIGN</span>
+            </div>
+            <h4 class="pillar-title">Accessible UI / UX</h4>
+            <p class="pillar-desc">
+              User-centric Figma prototypes, WCAG AA accessibility compliance, and inclusive regional educational tools.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      </section>
+  <!-- Section Divider -->
+  <div class="section-divider-wrapper"><div class="section-divider gs-divider"></div></div>
+
+  
+  <!-- ===== SKILLS SHELF ===== -->
+  <section id="skills" class="skills-shelf-scene" aria-label="Skills & Technologies">
+    <div class="shelf-container">
+      <h2 class="shelf-title scramble-text">TECH STACKS I USE</h2>
+      <p class="shelf-sub-hint">Click any technology tile to inspect architectural focus, libraries & production experience</p>
+      <div class="shelf-grid">
+        <!-- Row 1 -->
+        <div class="shelf-row">
+          <div class="shelf-item" id="skill-typescript" data-tech="typescript" style="--tech-glow: rgba(49, 120, 198, 0.5);">
+            <div class="tech-glass-tile" id="tile-typescript">
+              <img src="/tech-icons/typescript.svg" alt="TypeScript logo" class="tech-stack-icon" width="46" height="46" loading="lazy" />
+            </div>
+            <span class="tech-stack-label">TypeScript</span>
+          </div>
+          <div class="shelf-item" id="skill-react" data-tech="react" style="--tech-glow: rgba(97, 218, 251, 0.5);">
+            <div class="tech-glass-tile" id="tile-react">
+              <img src="/tech-icons/react.svg" alt="React logo" class="tech-stack-icon" width="46" height="46" loading="lazy" />
+            </div>
+            <span class="tech-stack-label">React</span>
+          </div>
+          <div class="shelf-item" id="skill-nextdotjs" data-tech="nextdotjs" style="--tech-glow: rgba(255, 255, 255, 0.4);">
+            <div class="tech-glass-tile" id="tile-nextdotjs">
+              <img src="/tech-icons/nextdotjs.svg" alt="Next.js logo" class="tech-stack-icon" width="46" height="46" loading="lazy" />
+            </div>
+            <span class="tech-stack-label">Next.js</span>
+          </div>
+          <div class="shelf-item" id="skill-nodedotjs" data-tech="nodedotjs" style="--tech-glow: rgba(83, 158, 67, 0.5);">
+            <div class="tech-glass-tile" id="tile-nodedotjs">
+              <img src="/tech-icons/nodedotjs.svg" alt="Node.js logo" class="tech-stack-icon" width="46" height="46" loading="lazy" />
+            </div>
+            <span class="tech-stack-label">Node.js</span>
+          </div>
+        </div>
+        <!-- Row 2 -->
+        <div class="shelf-row">
+          <div class="shelf-item" id="skill-python" data-tech="python" style="--tech-glow: rgba(255, 212, 59, 0.45);">
+            <div class="tech-glass-tile" id="tile-python">
+              <img src="/tech-icons/python.svg" alt="Python logo" class="tech-stack-icon" width="46" height="46" loading="lazy" />
+            </div>
+            <span class="tech-stack-label">Python</span>
+          </div>
+          <div class="shelf-item" id="skill-threejs" data-tech="threejs" style="--tech-glow: rgba(255, 255, 255, 0.45);">
+            <div class="tech-glass-tile" id="tile-threejs">
+              <img src="/tech-icons/threejs.svg" alt="Three.js logo" class="tech-stack-icon" width="46" height="46" loading="lazy" />
+            </div>
+            <span class="tech-stack-label">Three.js</span>
+          </div>
+          <div class="shelf-item" id="skill-webgl" data-tech="webgl" style="--tech-glow: rgba(234, 51, 35, 0.5);">
+            <div class="tech-glass-tile" id="tile-webgl">
+              <img src="/tech-icons/webgl.svg" alt="WebGL logo" class="tech-stack-icon" width="54" height="40" loading="lazy" />
+            </div>
+            <span class="tech-stack-label">WebGL</span>
+          </div>
+          <div class="shelf-item" id="skill-gsap" data-tech="gsap" style="--tech-glow: rgba(136, 206, 2, 0.5);">
+            <div class="tech-glass-tile" id="tile-gsap">
+              <img src="/tech-icons/gsap.svg" alt="GSAP logo" class="tech-stack-icon" width="46" height="46" loading="lazy" />
+            </div>
+            <span class="tech-stack-label">GSAP</span>
+          </div>
+        </div>
+        <!-- Row 3 -->
+        <div class="shelf-row">
+          <div class="shelf-item" id="skill-tailwindcss" data-tech="tailwindcss" style="--tech-glow: rgba(56, 189, 248, 0.5);">
+            <div class="tech-glass-tile" id="tile-tailwindcss">
+              <img src="/tech-icons/tailwindcss.svg" alt="Tailwind CSS logo" class="tech-stack-icon" width="46" height="46" loading="lazy" />
+            </div>
+            <span class="tech-stack-label">Tailwind</span>
+          </div>
+          <div class="shelf-item" id="skill-figma" data-tech="figma" style="--tech-glow: rgba(242, 78, 30, 0.5);">
+            <div class="tech-glass-tile" id="tile-figma">
+              <img src="/tech-icons/figma.svg" alt="Figma logo" class="tech-stack-icon" width="46" height="46" loading="lazy" />
+            </div>
+            <span class="tech-stack-label">Figma</span>
+          </div>
+          <div class="shelf-item" id="skill-git" data-tech="git" style="--tech-glow: rgba(240, 80, 50, 0.5);">
+            <div class="tech-glass-tile" id="tile-git">
+              <img src="/tech-icons/git.svg" alt="Git logo" class="tech-stack-icon" width="46" height="46" loading="lazy" />
+            </div>
+            <span class="tech-stack-label">Git</span>
+          </div>
+          <div class="shelf-item" id="skill-docker" data-tech="docker" style="--tech-glow: rgba(36, 150, 237, 0.5);">
+            <div class="tech-glass-tile" id="tile-docker">
+              <img src="/tech-icons/docker.svg" alt="Docker logo" class="tech-stack-icon" width="46" height="46" loading="lazy" />
+            </div>
+            <span class="tech-stack-label">Docker</span>
+          </div>
+        </div>
+        <!-- Row 4 -->
+        <div class="shelf-row">
+          <div class="shelf-item" id="skill-html5" data-tech="html5" style="--tech-glow: rgba(228, 77, 38, 0.5);">
+            <div class="tech-glass-tile" id="tile-html5">
+              <img src="/tech-icons/html5.svg" alt="HTML5 logo" class="tech-stack-icon" width="46" height="46" loading="lazy" />
+            </div>
+            <span class="tech-stack-label">HTML5</span>
+          </div>
+          <div class="shelf-item" id="skill-css3" data-tech="css3" style="--tech-glow: rgba(21, 114, 182, 0.5);">
+            <div class="tech-glass-tile" id="tile-css3">
+              <img src="/tech-icons/css3.svg" alt="CSS3 logo" class="tech-stack-icon" width="46" height="46" loading="lazy" />
+            </div>
+            <span class="tech-stack-label">CSS3</span>
+          </div>
+          <div class="shelf-item" id="skill-javascript" data-tech="javascript" style="--tech-glow: rgba(247, 223, 30, 0.45);">
+            <div class="tech-glass-tile" id="tile-javascript">
+              <img src="/tech-icons/javascript.svg" alt="JavaScript logo" class="tech-stack-icon" width="46" height="46" loading="lazy" />
+            </div>
+            <span class="tech-stack-label">JavaScript</span>
+          </div>
+          <div class="shelf-item" id="skill-vuejs" data-tech="vuejs" style="--tech-glow: rgba(65, 184, 131, 0.5);">
+            <div class="tech-glass-tile" id="tile-vuejs">
+              <img src="/tech-icons/vuejs.svg" alt="Vue.js logo" class="tech-stack-icon" width="46" height="46" loading="lazy" />
+            </div>
+            <span class="tech-stack-label">Vue.js</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tech Stack Detail Drawer Modal -->
+    <div id="tech-drawer-backdrop" class="tech-drawer-backdrop" aria-hidden="true"></div>
+    <aside id="tech-stack-drawer" class="tech-stack-drawer" role="dialog" aria-modal="true" aria-label="Technology Specification Details">
+      <div class="tech-drawer-top">
+        <span class="tech-drawer-badge-tag">TECHNICAL SPECIFICATION</span>
+        <button id="tech-drawer-close" class="tech-drawer-close" aria-label="Close details dialog">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div id="tech-drawer-content" class="tech-drawer-content">
+        <!-- Injected dynamically by TechStackDrawer.js -->
+      </div>
+    </aside>
+  </section>
+  <!-- Section Divider -->
+  <div class="section-divider-wrapper"><div class="section-divider gs-divider"></div></div>
+
+
+
+  <!-- ===== PREMIUM EDUCATION TIMELINE ===== -->
+  <section id="education" class="premium-edu-section" aria-label="Education Journey">
+    <div class="premium-edu-container">
+      <div class="edu-left-col">
+        <div class="edu-sticky-text">
+          <h2 class="edu-super-title gs-reveal" id="academic-chronicle-title" title="Hover to scramble">
+            <span class="edu-title-scramble scramble-text" data-text="Academic">Academic</span><br/>
+            <span class="edu-title-scramble text-accent scramble-text" data-text="Chronicle.">Chronicle.</span>
+          </h2>
+          <p class="edu-sub gs-reveal">A chronological timeline of my formal education and foundational growth.</p>
+        </div>
+      </div>
+      <div class="edu-right-col">
+        <div class="edu-track-wrapper">
+          <svg class="edu-svg-track" viewBox="0 0 10 1000" preserveAspectRatio="none">
+             <path class="edu-svg-line-bg" d="M 5 0 L 5 1000" />
+             <path class="edu-svg-line" d="M 5 0 L 5 1000" />
+          </svg>
+        </div>
+        
+        <div class="premium-edu-item gs-edu-reveal">
+          <div class="edu-node"></div>
+          <div class="edu-content glass-card">
+            <div class="edu-meta-row">
+              <span class="edu-year-pill">2022 — 2023</span>
+              <span class="edu-status">Completed</span>
+              <span class="edu-grade-pill">458 / 500 (91.6%)</span>
+            </div>
+            <h3 class="edu-degree-title scramble-text" data-text="Secondary Education (Grade 10)">Secondary Education (Grade 10)</h3>
+            <p class="edu-school-name">Linga Matriculation School</p>
+            <p class="edu-highlights">Graduated with academic distinction, developing rigorous analytical thinking and foundations in mathematics and science.</p>
+          </div>
+        </div>
+
+        <div class="premium-edu-item gs-edu-reveal">
+          <div class="edu-node"></div>
+          <div class="edu-content glass-card">
+            <div class="edu-meta-row">
+              <span class="edu-year-pill">2024 — 2025</span>
+              <span class="edu-status">Completed</span>
+              <span class="edu-grade-pill">580 / 600 (96.67%)</span>
+            </div>
+            <h3 class="edu-degree-title scramble-text" data-text="Higher Secondary (Grade 12)">Higher Secondary (Grade 12)</h3>
+            <p class="edu-school-name">Noble Matric Higher Secondary School</p>
+            <p class="edu-highlights">Achieved 96.67% aggregate with high-ranking performance in Computer Science, Mathematics, and Physical Sciences.</p>
+          </div>
+        </div>
+
+        <div class="premium-edu-item gs-edu-reveal">
+          <div class="edu-node"></div>
+          <div class="edu-content glass-card">
+            <div class="edu-meta-row">
+              <span class="edu-year-pill">2025 — 2029</span>
+              <span class="edu-status status-current">Current • 1st Sem</span>
+              <span class="edu-grade-pill">CGPA: 8.54 / 10</span>
+            </div>
+            <h3 class="edu-degree-title scramble-text" data-text="B.E. Computer Science">B.E. Computer Science</h3>
+            <p class="edu-school-name">Thiagarajar College of Engineering, Madurai</p>
+            <p class="edu-highlights">Pursuing rigorous computer science fundamentals, full-stack web engineering, and UX design. 3rd Prize winner in College Ideathon.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- Section Divider -->
+  <div class="section-divider-wrapper"><div class="section-divider gs-divider"></div></div>
+  
+  <!-- ===== AVANT-GARDE WORK SCENE ===== -->
+  <section id="work" class="avant-work-scene" aria-label="Selected Works">
+
+    <div class="avant-container">
+      <div class="avant-header gs-reveal">
+        <h2 class="avant-title scramble-text">Projects</h2>
+        <p class="avant-subtitle">( Click or hover to explore )</p>
       </div>
 
+      <ul class="avant-list">
+        <li class="avant-item" data-project-id="project-0">
+          <div class="avant-item-header">
+            <span class="avant-item-num">01</span>
+            <div class="avant-item-text">
+              <h3 class="avant-item-title scramble-text">Samathuva Kalvi</h3>
+              <span class="avant-item-cat">React &bull; AI &bull; PWA</span>
+            </div>
+            <div class="avant-item-arrow">↗</div>
+          </div>
+          <div class="avant-item-reveal">
+            <div class="avant-item-desc-wrap">
+              <p class="avant-item-desc">An inclusive e-learning platform empowering rural and government school students across Tamil Nadu with multilingual AI doubt resolution and offline PWA capability.</p>
+              <a href="#" class="avant-item-link">Explore Case Study &mdash;</a>
+            </div>
+          </div>
+        </li>
+        <li class="avant-item" data-project-id="project-1">
+          <div class="avant-item-header">
+            <span class="avant-item-num">02</span>
+            <div class="avant-item-text">
+              <h3 class="avant-item-title scramble-text">Storify</h3>
+              <span class="avant-item-cat">PWA &bull; React &bull; AI</span>
+            </div>
+            <div class="avant-item-arrow">↗</div>
+          </div>
+          <div class="avant-item-reveal">
+            <div class="avant-item-desc-wrap">
+              <p class="avant-item-desc">A smart inventory and supply chain management PWA with AI-driven demand forecasting, real-time analytics, and barcode scanning for modern businesses.</p>
+              <a href="#" class="avant-item-link">Explore Case Study &mdash;</a>
+            </div>
+          </div>
+        </li>
+        <li class="avant-item" data-project-id="project-2">
+          <div class="avant-item-header">
+            <span class="avant-item-num">03</span>
+            <div class="avant-item-text">
+              <h3 class="avant-item-title scramble-text">Water Quality Monitoring</h3>
+              <span class="avant-item-cat">IoT &bull; Python &bull; Analytics</span>
+            </div>
+            <div class="avant-item-arrow">↗</div>
+          </div>
+          <div class="avant-item-reveal">
+            <div class="avant-item-desc-wrap">
+              <p class="avant-item-desc">Hardware sensor integration tracking pH, turbidity, and TDS levels with Python data analytics, automated threshold alerts, and real-time telemetry dashboards.</p>
+              <a href="#" class="avant-item-link">Explore Case Study &mdash;</a>
+            </div>
+          </div>
+        </li>
+        <li class="avant-item" data-project-id="project-3">
+          <div class="avant-item-header">
+            <span class="avant-item-num">04</span>
+            <div class="avant-item-text">
+              <h3 class="avant-item-title scramble-text">EduSense AI</h3>
+              <span class="avant-item-cat">React &bull; Python &bull; Docker</span>
+            </div>
+            <div class="avant-item-arrow">↗</div>
+          </div>
+          <div class="avant-item-reveal">
+            <div class="avant-item-desc-wrap">
+              <p class="avant-item-desc">An AI-powered multilingual educational platform bridging educational gaps with personalized learning pathways, voice interfaces, and containerized deployment.</p>
+              <a href="#" class="avant-item-link">Explore Case Study &mdash;</a>
+            </div>
+          </div>
+        </li>
+      </ul>
     </div>
-  </div>
+  </section>
+  <!-- Section Divider -->
+  <div class="section-divider-wrapper"><div class="section-divider gs-divider"></div></div>
 
 
+  <!-- ===== HONORS, CERTIFICATIONS & LEADERSHIP SCENE ===== -->
+  <section id="honors" class="honors-scene" aria-label="Honors and Certifications">
+    <div class="honors-container">
+      <div class="honors-header gs-reveal">
+        <span class="honors-eyebrow scramble-text">ACADEMIC &amp; COMPETITIVE DISTINCTION</span>
+        <h2 class="honors-heading scramble-text">Honors, <span class="heading-italic">Certifications</span><br />&amp; Activities.</h2>
+        <p class="honors-sub">
+          Recognition of problem-solving rigor, continuous self-guided upskilling, and active contributions across hackathons, academics, and team leadership.
+        </p>
+      </div>
+
+      <div class="honors-grid">
+        <!-- Card 1: 3rd Prize in College Ideathon -->
+        <div class="honors-card gs-reveal">
+          <div class="honors-card-top">
+            <div class="honors-icon-wrap" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="7"></circle>
+                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+              </svg>
+            </div>
+            <span class="honors-badge">Competition Award</span>
+          </div>
+          <h3 class="honors-title">3rd Prize &mdash; College Ideathon</h3>
+          <span class="honors-issuer">Thiagarajar College of Engineering</span>
+          <p class="honors-desc">
+            Awarded 3rd Prize in the competitive intra-college Ideathon competition for architecting and pitching innovative technical solutions addressing real-world community challenges.
+          </p>
+        </div>
+
+        <!-- Card 2: Google Python Certification -->
+        <div class="honors-card gs-reveal">
+          <div class="honors-card-top">
+            <div class="honors-icon-wrap" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <span class="honors-badge">Professional Credential</span>
+          </div>
+          <h3 class="honors-title">Crash Course in Python</h3>
+          <span class="honors-issuer">Google &bull; Coursera Verified</span>
+          <p class="honors-desc">
+            Mastered core programming structures, object-oriented paradigms, automation scripts, and algorithmic data structures with industry-standard Python practices.
+          </p>
+        </div>
+
+        <!-- Card 3: Higher Secondary Academic Distinction -->
+        <div class="honors-card gs-reveal">
+          <div class="honors-card-top">
+            <div class="honors-icon-wrap" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+              </svg>
+            </div>
+            <span class="honors-badge">Board Distinction &bull; 96.67%</span>
+          </div>
+          <h3 class="honors-title">Grade 12 Academic Distinction</h3>
+          <span class="honors-issuer">Noble Matric Higher Secondary School &bull; 580/600</span>
+          <p class="honors-desc">
+            Secured an aggregate of 580/600 (96.67%) in the Tamil Nadu Higher Secondary Examinations with top ranks across Computer Science, Physics, and Mathematics.
+          </p>
+        </div>
+
+        <!-- Card 4: Secondary Education Distinction -->
+        <div class="honors-card gs-reveal">
+          <div class="honors-card-top">
+            <div class="honors-icon-wrap" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+            </div>
+            <span class="honors-badge">Board Distinction &bull; 91.6%</span>
+          </div>
+          <h3 class="honors-title">Grade 10 Academic Honors</h3>
+          <span class="honors-issuer">Linga Matriculation School &bull; 458/500</span>
+          <p class="honors-desc">
+            Achieved 458/500 (91.6%) in the Secondary School Leaving Certificate (SSLC) examinations, maintaining consistent high performance across foundational STEM courses.
+          </p>
+        </div>
+
+        <!-- Card 5: Technical Specialization -->
+        <div class="honors-card gs-reveal">
+          <div class="honors-card-top">
+            <div class="honors-icon-wrap" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 18 22 12 16 6"></polyline>
+                <polyline points="8 6 2 12 8 18"></polyline>
+              </svg>
+            </div>
+            <span class="honors-badge">Core Specialization</span>
+          </div>
+          <h3 class="honors-title">Front-End &amp; PWA Engineering</h3>
+          <span class="honors-issuer">Modern Web Systems &bull; Inclusive UI/UX</span>
+          <p class="honors-desc">
+            Specialized competence in building Progressive Web Apps (PWAs), state synchronization, responsive web components, and inclusive interfaces tailored for diverse student and business demographics.
+          </p>
+        </div>
+
+        <!-- Card 6: Team Leadership & Cricket -->
+        <div class="honors-card gs-reveal">
+          <div class="honors-card-top">
+            <div class="honors-icon-wrap" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <span class="honors-badge">Activities &amp; Athletics</span>
+          </div>
+          <h3 class="honors-title">Cricket, Strategy &amp; Growth</h3>
+          <span class="honors-issuer">Athletic Focus &bull; Continuous Learning</span>
+          <p class="honors-desc">
+            Active competitive cricket enthusiast bringing sportsmanship, tactical focus, and high-pressure composure into software engineering, team collaboration, and problem-solving.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- Section Divider -->
+  <div class="section-divider-wrapper"><div class="section-divider gs-divider"></div></div>
+
+  <!-- ===== SERVICES & COLLABORATION PROCESS ===== -->
+  <section id="services" class="services-scene" aria-label="Services & Collaboration Process">
+    <div class="services-container">
+      <div class="services-header-wrap">
+        <span class="services-eyebrow scramble-text">SERVICES & WORKFLOW</span>
+        <h2 class="services-heading scramble-text">
+          Architectural rigor meets<br />
+          <span class="heading-italic">creative motion.</span>
+        </h2>
+        <p class="services-sub">
+          Translating ambitious creative concepts into production-grade, 60fps digital experiences engineered for performance, accessible usability, and lasting commercial impact.
+        </p>
+      </div>
+
+      <!-- Service Offerings (3 Cards) -->
+      <div class="service-cards-grid">
+        <!-- Service Card 1 -->
+        <div class="service-card" data-service="frontend">
+          <div class="service-card-top">
+            <span class="service-card-num">01</span>
+            <div class="service-card-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 18 22 12 16 6"></polyline>
+                <polyline points="8 6 2 12 8 18"></polyline>
+              </svg>
+            </div>
+          </div>
+          <h3 class="service-card-title">Creative Frontend Engineering</h3>
+          <p class="service-card-desc">
+            Production web applications built with modern component architectures, type safety, and pixel-perfect design system execution across every screen dimension.
+          </p>
+          <ul class="service-deliverables">
+            <li><span class="deliv-bullet">•</span> Design System & Token Integration</li>
+            <li><span class="deliv-bullet">•</span> Fluid Responsive Multi-Device UI</li>
+            <li><span class="deliv-bullet">•</span> State Machine & Real-Time Sync</li>
+            <li><span class="deliv-bullet">•</span> WCAG 2.1 AA Accessibility Standards</li>
+          </ul>
+          <div class="service-tech-tags">
+            <span class="service-tag">TypeScript</span>
+            <span class="service-tag">React</span>
+            <span class="service-tag">Next.js</span>
+            <span class="service-tag">Tailwind</span>
+          </div>
+        </div>
+
+        <!-- Service Card 2 -->
+        <div class="service-card" data-service="3d-motion">
+          <div class="service-card-top">
+            <span class="service-card-num">02</span>
+            <div class="service-card-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+            </div>
+          </div>
+          <h3 class="service-card-title">3D Web Experiences & Spatial Motion</h3>
+          <p class="service-card-desc">
+            Immersive spatial web experiences, custom GPU shaders, and interactive 3D worlds that captivate audiences without sacrificing mobile responsiveness.
+          </p>
+          <ul class="service-deliverables">
+            <li><span class="deliv-bullet">•</span> Custom GLSL Fragment & Vertex Shaders</li>
+            <li><span class="deliv-bullet">•</span> Three.js Interactive Scene Graphs</li>
+            <li><span class="deliv-bullet">•</span> Choreographed GSAP Scroll Journeys</li>
+            <li><span class="deliv-bullet">•</span> Draw-Call Caching & Geometry Tuning</li>
+          </ul>
+          <div class="service-tech-tags">
+            <span class="service-tag">Three.js</span>
+            <span class="service-tag">WebGL</span>
+            <span class="service-tag">GLSL</span>
+            <span class="service-tag">GSAP</span>
+          </div>
+        </div>
+
+        <!-- Service Card 3 -->
+        <div class="service-card" data-service="audit">
+          <div class="service-card-top">
+            <span class="service-card-num">03</span>
+            <div class="service-card-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+          </div>
+          <h3 class="service-card-title">Performance & Motion Audits</h3>
+          <p class="service-card-desc">
+            Transforming sluggish frame rates, bloated JavaScript bundles, and janky scrolling into sub-second, 60fps buttery-smooth web experiences.
+          </p>
+          <ul class="service-deliverables">
+            <li><span class="deliv-bullet">•</span> Frame-Budget Profiling & Paint Layers</li>
+            <li><span class="deliv-bullet">•</span> Bundle Tree-Shaking & Code Splitting</li>
+            <li><span class="deliv-bullet">•</span> Core Web Vitals (LCP, INP, CLS) Tuning</li>
+            <li><span class="deliv-bullet">•</span> Memory Leak Remediation</li>
+          </ul>
+          <div class="service-tech-tags">
+            <span class="service-tag">Lighthouse 100</span>
+            <span class="service-tag">DevTools Profiler</span>
+            <span class="service-tag">Web Vitals</span>
+            <span class="service-tag">GPU Compositor</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collaboration Workflow (4 Steps) -->
+      <div class="workflow-wrap">
+        <div class="workflow-header">
+          <span class="workflow-eyebrow scramble-text">THE 4-PHASE WORKFLOW</span>
+          <h3 class="workflow-title">Discovery to High-Framerate Deployment</h3>
+        </div>
+
+        <div class="workflow-grid">
+          <!-- Step 1 -->
+          <div class="workflow-step">
+            <div class="step-badge">
+              <span class="step-index">01</span>
+              <span class="step-status">PHASE 1</span>
+            </div>
+            <h4 class="step-title">Discovery & Architecture</h4>
+            <p class="step-desc">
+              Aligning on technical scope, performance targets, design system tokens, and motion choreography objectives.
+            </p>
+            <div class="step-deliverable">
+              <span class="step-deliverable-label">DELIVERABLE:</span>
+              <span class="step-deliverable-val">Architecture Plan & Motion Specs</span>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="workflow-step">
+            <div class="step-badge">
+              <span class="step-index">02</span>
+              <span class="step-status">PHASE 2</span>
+            </div>
+            <h4 class="step-title">Interactive Prototyping</h4>
+            <p class="step-desc">
+              Rapid sandboxing of motion mechanics, shader visual physics, and tactile interaction states for real-time validation.
+            </p>
+            <div class="step-deliverable">
+              <span class="step-deliverable-label">DELIVERABLE:</span>
+              <span class="step-deliverable-val">Live WebGL/GSAP Prototype</span>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="workflow-step">
+            <div class="step-badge">
+              <span class="step-index">03</span>
+              <span class="step-status">PHASE 3</span>
+            </div>
+            <h4 class="step-title">Production Engineering</h4>
+            <p class="step-desc">
+              Clean, modular, type-safe development backed by responsive multi-breakpoint testing and zero runtime console errors.
+            </p>
+            <div class="step-deliverable">
+              <span class="step-deliverable-label">DELIVERABLE:</span>
+              <span class="step-deliverable-val">Scalable Production Codebase</span>
+            </div>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="workflow-step">
+            <div class="step-badge">
+              <span class="step-index">04</span>
+              <span class="step-status">PHASE 4</span>
+            </div>
+            <h4 class="step-title">Audit & Polish</h4>
+            <p class="step-desc">
+              Frame-rate stress testing, GPU draw-call reduction, accessibility compliance verification, and frictionless handoff.
+            </p>
+            <div class="step-deliverable">
+              <span class="step-deliverable-label">DELIVERABLE:</span>
+              <span class="step-deliverable-val">Optimized 60FPS Deployment</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Services CTA Banner -->
+      <div class="services-cta-banner">
+        <div class="cta-banner-text">
+          <h4 class="cta-banner-title">Have an upcoming vision or product to build?</h4>
+          <p class="cta-banner-sub">Currently available for select freelance engineering & creative contract collaborations.</p>
+        </div>
+        <a href="#contact" class="cta-banner-btn">
+          <span>Start a Conversation</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+  <!-- Section Divider -->
+  <div class="section-divider-wrapper"><div class="section-divider gs-divider"></div></div>
+  
   <!-- ===== CONTACT SCENE — Single Layered Composition ===== -->
   <section id="contact" class="contact-scene" aria-label="Contact Section">
 
@@ -116,7 +880,7 @@
 
     <!-- Layer 0 (z:10): Hands background — static image + animation canvas -->
     <div class="contact-hands-layer" aria-hidden="true">
-      <img id="hands-static" class="hands-bg" src="/hands-reaching.png" alt="" />
+      <img id="hands-static" class="hands-bg lazy-image" data-src="/hands-reaching.png" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" />
       <canvas id="hands-canvas" class="hands-bg hands-canvas" width="1280" height="720"></canvas>
     </div>
 
@@ -130,94 +894,82 @@
     <div id="contact-form-layer" class="contact-form-layer">
 
       <!-- Centered Header -->
+            <!-- Trust-Building Centered Header -->
       <div class="contact-header">
-        <span class="contact-eyebrow">GET IN TOUCH</span>
-        <h2 class="contact-heading">
-          Let's Create Something<br />
-          Amazing <span class="heading-italic">Together</span>
+        <span class="contact-eyebrow scramble-text">START A CONVERSATION</span>
+        <h2 class="contact-heading-trust">
+          Let's Build Something<br />
+          <span class="heading-italic">Exceptional.</span>
         </h2>
         <p class="contact-subtext">
-          Have a project in mind or just want to say hello?<br />
-          I'd love to hear from you.
+          I am currently available for freelance projects and new opportunities.<br />
+          Send a message below and I will respond promptly.
         </p>
       </div>
 
-      <!-- Two-Column Grid Form -->
-      <form id="contact-form" class="contact-form" novalidate>
-        <div class="contact-form-grid">
-
-          <!-- Left Column -->
-          <div class="form-col-left">
-
-            <!-- Name & Email Row -->
-            <div class="form-row-duo">
-              <div class="form-field">
-                <input type="text" id="contact-name" name="name" class="form-input" placeholder="Your Name" required autocomplete="name" />
-                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              </div>
-              <div class="form-field">
-                <input type="email" id="contact-email" name="email" class="form-input" placeholder="Your Email" required autocomplete="email" />
-                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-              </div>
-            </div>
-
-            <!-- Subject -->
-            <div class="form-field">
-              <input type="text" id="contact-subject" name="subject" class="form-input" placeholder="Subject" />
-              <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-            </div>
-
-            <!-- Website -->
-            <div class="form-field">
-              <input type="url" id="contact-website" name="website" class="form-input" placeholder="Your Website (Optional)" />
-              <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-            </div>
-
-            <!-- Error -->
-            <div id="contact-error-msg" class="contact-error-msg" role="alert"></div>
-
-            <!-- Submit -->
-            <button type="submit" id="contact-submit-btn" class="contact-submit-btn">
-              <span class="btn-text">SEND MESSAGE</span>
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-            </button>
-
+      <!-- Sleek Trust Form -->
+      <form id="contact-form" class="contact-trust-form" novalidate>
+        <div class="trust-row-duo">
+          <div class="trust-field">
+            <label for="contact-name" class="trust-label">
+              <span class="trust-label-text">Your Name</span>
+              <span class="trust-required" aria-hidden="true">*</span>
+            </label>
+            <input type="text" id="contact-name" name="name" class="trust-input" placeholder="Eleanor Vance" required autocomplete="name" />
           </div>
-
-          <!-- Right Column: Full-Height Textarea -->
-          <div class="form-col-right">
-            <div class="form-field form-field-textarea">
-              <textarea id="contact-message" name="message" class="form-textarea" placeholder="Your Message" required></textarea>
-              <svg class="field-icon textarea-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
-            </div>
+          <div class="trust-field">
+            <label for="contact-email" class="trust-label">
+              <span class="trust-label-text">Email Address</span>
+              <span class="trust-required" aria-hidden="true">*</span>
+            </label>
+            <input type="email" id="contact-email" name="email" class="trust-input" placeholder="eleanor@studio.co" required autocomplete="email" />
           </div>
-
+        </div>
+        <div class="trust-field">
+          <label for="contact-subject" class="trust-label">
+            <span class="trust-label-text">Project Scope / Subject</span>
+            <span class="trust-optional">Optional</span>
+          </label>
+          <input type="text" id="contact-subject" name="subject" class="trust-input" placeholder="Design System, Web Application, or Freelance" />
+        </div>
+        <div class="trust-field">
+          <label for="contact-message" class="trust-label">
+            <span class="trust-label-text">Your Message</span>
+            <span class="trust-required" aria-hidden="true">*</span>
+          </label>
+          <textarea id="contact-message" name="message" class="trust-textarea" placeholder="Tell me about your project goals, scope, and timeline..." required></textarea>
+        </div>
+        <div id="contact-error-msg" class="contact-error-msg" role="alert"></div>
+        <div class="trust-btn-wrapper">
+          <button type="submit" id="contact-submit-btn" class="trust-submit-btn">
+            <span class="btn-text">SEND INQUIRY</span>
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
         </div>
       </form>
 
-      <!-- Footer Info Row -->
       <div class="contact-footer">
 
         <div class="contact-info-row">
-          <a href="mailto:hello@anbupravin.com" class="info-item">
+          <a href="mailto:anbupravin77@gmail.com" class="info-item">
             <div class="info-icon-circle">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
             </div>
             <div class="info-text">
               <span class="info-label">EMAIL</span>
-              <span class="info-val">hello@anbupravin.com</span>
+              <span class="info-val">anbupravin77@gmail.com</span>
             </div>
           </a>
 
           <div class="info-divider" aria-hidden="true"></div>
 
-          <a href="tel:+11234567890" class="info-item">
+          <a href="tel:+918807571445" class="info-item">
             <div class="info-icon-circle">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
             </div>
             <div class="info-text">
               <span class="info-label">PHONE</span>
-              <span class="info-val">+1 (123) 456-7890</span>
+              <span class="info-val">+91 8807571445</span>
             </div>
           </a>
 
@@ -229,7 +981,7 @@
             </div>
             <div class="info-text">
               <span class="info-label">LOCATION</span>
-              <span class="info-val">Chennai, India</span>
+              <span class="info-val">Madurai, Tamil Nadu, India</span>
             </div>
           </div>
         </div>
@@ -239,10 +991,10 @@
         <div class="contact-social-row">
           <span class="social-label">LET'S CONNECT</span>
           <div class="social-icons">
-            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="LinkedIn">
+            <a href="https://linkedin.com/in/r-r-anbu-pravin-b53a2835a" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="LinkedIn">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
             </a>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="GitHub">
+            <a href="https://github.com/anbupravin-glitch" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="GitHub">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/></svg>
             </a>
             <a href="https://x.com" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Twitter / X">
@@ -261,12 +1013,9 @@
     <!-- Layer 4 (z:50): Thank-you overlay (Brackets the central handshake in negative space) -->
     <div id="contact-thankyou-layer" class="contact-thankyou-layer">
       <div class="thankyou-container">
-
         <!-- Top zone: above the handshake -->
         <div class="thankyou-top">
-          <span class="thankyou-spark" aria-hidden="true">✦</span>
-          <h2 class="thankyou-badge">THANK YOU</h2>
-          <p class="thankyou-title">FOR REACHING OUT</p>
+          <h2 class="thankyou-heading-trust">THANK YOU</h2>
         </div>
 
         <!-- Center clearance zone: keeps the handshake completely visible and unobstructed -->
@@ -274,23 +1023,92 @@
 
         <!-- Bottom zone: below the handshake -->
         <div class="thankyou-bottom">
-          <p class="thankyou-quote">&ldquo;I appreciate your time and interest.&rdquo;</p>
-          <p class="thankyou-body">
-            I'll get back to you soon<br />
-            and create something amazing <span class="heading-italic">together.</span>
+          <p class="thankyou-quote-trust">&ldquo;I appreciate your time and interest.&rdquo;</p>
+          <p class="thankyou-body-trust">
+            Your inquiry was forwarded directly to <strong>anbupravin77@gmail.com</strong>.<br />
+            I will review your message and reach out shortly.
           </p>
-          <div class="thankyou-divider" aria-hidden="true"></div>
-          <p class="thankyou-tagline">GREAT IDEAS &bull; STRONG COLLABORATIONS &bull; EXTRAORDINARY RESULTS</p>
-          <button type="button" id="contact-reset-btn" class="contact-reset-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="reset-icon"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-            <span>SEND ANOTHER MESSAGE</span>
-          </button>
+          <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-top: 1.25rem;">
+            <button id="contact-reset-btn" class="trust-reset-btn">
+               <span class="btn-text">SEND ANOTHER MESSAGE</span>
+            </button>
+            <a id="thankyou-mailto-btn" href="mailto:anbupravin77@gmail.com" class="trust-reset-btn" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);">
+               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+               <span class="btn-text">OPEN IN EMAIL CLIENT</span>
+            </a>
+          </div>
         </div>
-
       </div>
     </div>
-
   </section>
+
+
+  <!-- ===== PROJECT MODAL ===== -->
+  <div id="project-modal" class="project-modal" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <button class="modal-close" aria-label="Close modal">
+        <span class="modal-close-text scramble-text">CLOSE</span>
+      </button>
+      <div class="modal-scroll-area">
+        <div class="modal-header">
+          <h2 id="modal-title" class="modal-title scramble-text">Project Title</h2>
+          <div class="modal-meta">
+            <span id="modal-category" class="modal-category">Category</span>
+            <span id="modal-year" class="modal-year">2024</span>
+          </div>
+        </div>
+        
+        <div class="modal-gallery">
+          <div class="lazy-image-wrapper aspect-landscape">
+            <img class="lazy-image" data-src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=1600" src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=10&w=400&blur=20" alt="Project visual 1">
+          </div>
+          <div class="modal-gallery-row">
+            <div class="lazy-image-wrapper aspect-portrait">
+               <img class="lazy-image" data-src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800" src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=10&w=200&blur=20" alt="Project visual 2">
+            </div>
+            <div class="lazy-image-wrapper aspect-portrait">
+               <img class="lazy-image" data-src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=800" src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=10&w=200&blur=20" alt="Project visual 3">
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-details">
+          <div class="modal-desc-col">
+            <h3 class="modal-subheading">About the Project</h3>
+            <p id="modal-description" class="modal-description">Detailed description goes here.</p>
+          </div>
+          <div class="modal-stack-col">
+            <h3 class="modal-subheading">Technologies</h3>
+            <ul id="modal-stack" class="modal-stack">
+              <li>React</li>
+              <li>WebGL</li>
+              <li>GSAP</li>
+            </ul>
+            <a href="#" class="modal-live-link primary-btn">Live View ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Persistent Floating Sound Controller (all pages/sections, bottom-right corner) -->
+  <button id="audio-toggle" class="floating-audio-btn" aria-label="Play ambient sound" aria-pressed="false" title="Play ambient sound">
+    <div class="sound-icon-box">
+      <!-- Muted sound icon (speaker with slash) -->
+      <svg class="sound-icon sound-icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <line x1="23" y1="9" x2="17" y2="15"></line>
+        <line x1="17" y1="9" x2="23" y2="15"></line>
+      </svg>
+      <!-- Active sound icon (speaker with radiating sound waves) -->
+      <svg class="sound-icon sound-icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path class="wave-1" d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        <path class="wave-2" d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+      </svg>
+    </div>
+  </button>
 
   <script type="module" src="/main.js"></script>
 </body>

@@ -1,0 +1,476 @@
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ContactHandshakeTransition } from './ContactHandshakeTransition.js';
+import VanillaTilt from 'vanilla-tilt';
+
+gsap.registerPlugin(ScrollTrigger);
+
+// Force scroll to top on page reload
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+window.scrollTo(0, 0);
+/* ============================================================
+   DOM REFERENCES
+   ============================================================ */
+const siteHeader       = document.getElementById('site-header');
+const hamburger        = document.getElementById('hamburger');
+const mobileNav        = document.getElementById('mobile-nav');
+const loader           = document.getElementById('loader');
+const navLinks         = document.querySelectorAll('.nav-link, .mobile-nav-link');
+const robotCanvas = document.getElementById("robot-canvas");
+const robotCtx = robotCanvas ? robotCanvas.getContext("2d") : null;
+
+const ROBOT_FRAME_COUNT = 192;
+const ROBOT_FRAME_DIR = "/1000074905_frames";
+const ROBOT_MISSING = new Set([184, 189]);
+const robotFramePaths = [];
+for (let i = 1; i <= ROBOT_FRAME_COUNT; i++) {
+  if (!ROBOT_MISSING.has(i)) robotFramePaths.push(`${ROBOT_FRAME_DIR}/frame_${String(i).padStart(3, "0")}.jpg`);
+}
+const totalRobotFrames = robotFramePaths.length;
+const robotImages = new Array(totalRobotFrames);
+let robotLoadedCount = 0;
+
+function preloadRobotFrames() {
+  return new Promise(resolve => {
+    let initialLoaded = 0;
+    const targetInitial = Math.min(12, totalRobotFrames);
+    let activeLoads = 0;
+    const loadQueue = [];
+    const passes = [16, 8, 4, 2, 1];
+    const added = new Set();
+    for (const step of passes) {
+      for (let i = 0; i < totalRobotFrames; i += step) {
+        if (!added.has(i)) { loadQueue.push([i, robotFramePaths[i]]); added.add(i); }
+      }
+    }
+    for (let i = 0; i < totalRobotFrames; i++) {
+      if (!added.has(i)) { loadQueue.push([i, robotFramePaths[i]]); added.add(i); }
+    }
+
+    function loadNext() {
+      if (loadQueue.length === 0 || activeLoads >= 6) return;
+      const [i, src] = loadQueue.shift();
+      activeLoads++;
+      const img = new Image();
+      img.src = src;
+      img.onload = img.onerror = () => {
+        robotImages[i] = img;
+        robotLoadedCount++;
+        activeLoads--;
+        if (initialLoaded < targetInitial) {
+          initialLoaded++;
+          if (initialLoaded >= targetInitial) resolve();
+        }
+        loadNext();
+      };
+      loadNext();
+    }
+    for (let k = 0; k < 6; k++) loadNext();
+  });
+}
+
+function resizeCanvases() {
+  if (!robotCanvas) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  robotCanvas.width = Math.round(w * dpr);
+  robotCanvas.height = Math.round(h * dpr);
+  robotCanvas.style.width = `${w}px`;
+  robotCanvas.style.height = `${h}px`;
+}
+
+let renderedRobotIndex = -1;
+function drawRobotFrame(index) {
+  if (!robotCtx || !robotCanvas) return;
+  const targetIdx = Math.floor(Math.max(0, Math.min(totalRobotFrames - 1, index)));
+  if (renderedRobotIndex === targetIdx) return;
+
+  let bestImg = null;
+  if (robotImages[targetIdx] && robotImages[targetIdx].complete && robotImages[targetIdx].naturalWidth > 0) {
+    bestImg = robotImages[targetIdx];
+  } else {
+    for (let offset = 1; offset <= totalRobotFrames; offset++) {
+      const downIdx = targetIdx - offset;
+      const upIdx = targetIdx + offset;
+      if (downIdx >= 0 && robotImages[downIdx] && robotImages[downIdx].complete && robotImages[downIdx].naturalWidth > 0) {
+        bestImg = robotImages[downIdx]; break;
+      }
+      if (upIdx < totalRobotFrames && robotImages[upIdx] && robotImages[upIdx].complete && robotImages[upIdx].naturalWidth > 0) {
+        bestImg = robotImages[upIdx]; break;
+      }
+    }
+  }
+
+  if (!bestImg) return;
+
+  const canvasW = robotCanvas.width;
+  const canvasH = robotCanvas.height;
+  const imgW = bestImg.naturalWidth;
+  const imgH = bestImg.naturalHeight;
+
+  const scale = Math.max(canvasW / imgW, canvasH / imgH);
+  const drawW = imgW * scale;
+  const drawH = imgH * scale;
+  const drawX = (canvasW - drawW) / 2;
+  const drawY = (canvasH - drawH) / 2;
+
+  robotCtx.clearRect(0, 0, canvasW, canvasH);
+  robotCtx.drawImage(bestImg, drawX, drawY, drawW, drawH);
+  renderedRobotIndex = targetIdx;
+}
+
+
+/* ============================================================
+   PERFORMANT AMBIENT MESH GRADIENT
+   ============================================================ */
+class AmbientMesh {
+  constructor() {
+    this.canvas = document.getElementById('mesh-canvas');
+    if (!this.canvas) return;
+    this.ctx = this.canvas.getContext('2d');
+    
+    // Ultra-low resolution for max performance. 
+    // CSS `image-rendering: auto` will perfectly blur/upscale it.
+    this.width = 64; 
+    this.height = 64;
+    this.canvas.width = this.width;
+    this.canvas.height = this.height;
+    
+    this.time = 0;
+    
+    this.palettes = {
+      light: [
+        { r: 244, g: 239, b: 230 }, // Base #f4efe6 (var(--bg-primary))
+        { r: 227, g: 219, b: 205 }, // Blob 1 (warm beige)
+        { r: 209, g: 215, b: 214 }, // Blob 2 (cool grey/blue)
+        { r: 230, g: 202, b: 202 }  // Blob 3 (soft rose)
+      ],
+      dark: [
+        { r: 12, g: 12, b: 12 },    // Base #0c0c0c
+        { r: 26, g: 18, b: 21 },    // Blob 1
+        { r: 16, g: 22, b: 26 },    // Blob 2
+        { r: 22, g: 26, b: 18 }     // Blob 3
+      ]
+    };
+    
+    this.currentPalette = JSON.parse(JSON.stringify(this.palettes.light));
+    this.targetPalette = this.palettes.light;
+    
+    this.animate = this.animate.bind(this);
+    requestAnimationFrame(this.animate);
+  }
+  
+  setTheme(mode) {
+    this.targetPalette = this.palettes[mode] || this.palettes.light;
+  }
+  
+  lerp(start, end, amt) {
+    return (1 - amt) * start + amt * end;
+  }
+  
+  animate() {
+    this.time += 0.004; // Slow ambient drift
+    
+    // Lerp colors for buttery smooth theme transitions (increased speed to prevent perceived lag)
+    for (let i = 0; i < 4; i++) {
+      this.currentPalette[i].r = this.lerp(this.currentPalette[i].r, this.targetPalette[i].r, 0.08);
+      this.currentPalette[i].g = this.lerp(this.currentPalette[i].g, this.targetPalette[i].g, 0.08);
+      this.currentPalette[i].b = this.lerp(this.currentPalette[i].b, this.targetPalette[i].b, 0.08);
+    }
+    
+    const p = this.currentPalette;
+    
+    // Fill Base
+    this.ctx.fillStyle = `rgb(${p[0].r}, ${p[0].g}, ${p[0].b})`;
+    this.ctx.fillRect(0, 0, this.width, this.height);
+    
+    // Draw Blobs with screen blending for luminous overlap
+    this.ctx.globalCompositeOperation = 'screen';
+    
+    this.drawBlob(
+      this.width * (0.5 + Math.sin(this.time * 0.8) * 0.3),
+      this.height * (0.5 + Math.cos(this.time * 1.1) * 0.3),
+      this.width * 0.6,
+      p[1]
+    );
+    this.drawBlob(
+      this.width * (0.5 + Math.sin(this.time * 1.3) * 0.4),
+      this.height * (0.5 + Math.cos(this.time * 0.7) * 0.4),
+      this.width * 0.5,
+      p[2]
+    );
+    this.drawBlob(
+      this.width * (0.5 + Math.sin(this.time * 0.9) * 0.35),
+      this.height * (0.5 + Math.cos(this.time * 1.5) * 0.35),
+      this.width * 0.55,
+      p[3]
+    );
+    
+    this.ctx.globalCompositeOperation = 'source-over';
+    
+    requestAnimationFrame(this.animate);
+  }
+  
+  drawBlob(x, y, radius, color) {
+    const grad = this.ctx.createRadialGradient(x, y, 0, x, y, radius);
+    grad.addColorStop(0, `rgba(${Math.round(color.r)}, ${Math.round(color.g)}, ${Math.round(color.b)}, 1)`);
+    grad.addColorStop(1, `rgba(${Math.round(color.r)}, ${Math.round(color.g)}, ${Math.round(color.b)}, 0)`);
+    this.ctx.fillStyle = grad;
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+    this.ctx.fill();
+  }
+}
+
+const ambientMesh = new AmbientMesh();
+window.ambientMesh = ambientMesh;
+
+/* ============================================================
+   NAVBAR & HAMBURGER
+   ============================================================ */
+let lastScrollY = 0;
+let headerHidden = false;
+
+function handleHeaderScroll() {
+  const y = window.scrollY;
+  if (y > lastScrollY && y > 100 && !headerHidden) {
+    siteHeader.classList.add('header-hidden');
+    headerHidden = true;
+    if (mobileNav.classList.contains('open')) {
+      mobileNav.classList.remove('open');
+      hamburger.classList.remove('open');
+    }
+  } else if (y < lastScrollY && headerHidden) {
+    siteHeader.classList.remove('header-hidden');
+    headerHidden = false;
+  }
+  lastScrollY = y;
+}
+window.addEventListener('scroll', handleHeaderScroll, { passive: true });
+
+hamburger.addEventListener('click', () => {
+  const isOpen = mobileNav.classList.contains('open');
+  mobileNav.classList.toggle('open', !isOpen);
+  hamburger.classList.toggle('open', !isOpen);
+});
+
+mobileNav.querySelectorAll('.mobile-nav-link').forEach(link => {
+  link.addEventListener('click', () => {
+    mobileNav.classList.remove('open');
+    hamburger.classList.remove('open');
+  });
+});
+
+// Smooth anchor scrolling
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', (e) => {
+    const targetId = anchor.getAttribute('href');
+    if (targetId === '#home') {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (targetId === '#about' || targetId === '#contact') {
+      e.preventDefault();
+      const section = document.querySelector(targetId);
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      e.preventDefault();
+      const scrollContainer = document.getElementById('scroll-container');
+      if (scrollContainer) {
+        const targetScroll = scrollContainer.offsetTop + (scrollContainer.offsetHeight - window.innerHeight);
+        window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+      }
+    }
+  });
+});
+
+function setActiveNavLink(sectionName) {
+  navLinks.forEach(link => {
+    if (link.getAttribute('data-section') === sectionName) {
+      link.classList.add('active');
+    } else {
+      link.classList.remove('active');
+    }
+  });
+
+  // Dynamically update document title based on section
+  const baseTitle = "Anbu Pravin | Creative Developer";
+  let sectionTitle = "";
+  switch(sectionName) {
+    case 'home': sectionTitle = "Home"; break;
+    case 'about': sectionTitle = "Philosophy"; break;
+    case 'work': sectionTitle = "Selected Works"; break;
+    case 'contact': sectionTitle = "Contact"; break;
+  }
+  
+  if (sectionTitle) {
+    document.title = `${sectionTitle} — ${baseTitle}`;
+  } else {
+    document.title = baseTitle;
+  }
+}
+
+
+/* ============================================================
+   ENTRANCE ANIMATION
+   ============================================================ */
+function playEntrance() {
+  const tl = gsap.timeline({ delay: 0.15 });
+
+  tl.to(siteHeader, {
+    opacity: 1,
+    duration: 0.6,
+    ease: 'power2.out',
+    onStart: () => siteHeader.classList.add('visible'),
+  });
+
+  tl.fromTo('.gs-reveal-hero', 
+    { autoAlpha: 0, y: 40 },
+    { autoAlpha: 1, y: 0, duration: 1.4, stagger: 0.1, ease: 'power4.out' }, 
+    "-=0.4"
+  );
+}
+
+
+/* ============================================================
+   INITIALIZATION
+   ============================================================ */
+async function init() {
+  // Hide loading screen
+  const loader = document.getElementById('loader');
+  if (loader) {
+    loader.classList.add('hidden');
+  }
+
+  // Trigger entrance animation for quote
+  playEntrance();
+
+  // Bespoke About Section Animation
+  const aboutScene = document.querySelector('.about-scene');
+  if (aboutScene) {
+    const aboutTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: aboutScene,
+        start: 'top 70%',
+        toggleActions: 'play none none reverse'
+      }
+    });
+
+    aboutTl
+      .fromTo('.about-eyebrow', 
+        { opacity: 0, y: 30 }, 
+        { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' })
+      .fromTo('.about-heading', 
+        { opacity: 0, y: 40 }, 
+        { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }, '-=0.4')
+      .fromTo('.about-lead', 
+        { opacity: 0, y: 30 }, 
+        { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out' }, '-=0.5')
+      .fromTo('.about-body', 
+        { opacity: 0, y: 30 }, 
+        { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out' }, '-=0.5')
+      .fromTo('.stat-item', 
+        { opacity: 0, y: 20 }, 
+        { opacity: 1, y: 0, duration: 0.6, stagger: 0.15, ease: 'power3.out' }, '-=0.5')
+      .fromTo('.about-image-wrapper', 
+        { opacity: 0, scale: 0.9, filter: 'blur(10px)' }, 
+        { opacity: 1, scale: 1, filter: 'blur(0px)', duration: 1.2, ease: 'power3.out' }, '-=0.8');
+  }
+
+  // Generic Reveal fallback for other sections
+  gsap.utils.toArray('.gs-reveal').forEach(elem => {
+    gsap.fromTo(elem, 
+      { opacity: 0, y: 40 },
+      {
+        opacity: 1, 
+        y: 0, 
+        duration: 1.2, 
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: elem,
+          start: 'top 85%',
+          toggleActions: 'play none none reverse'
+        }
+      }
+    );
+  });
+
+  // Bespoke Avant-Garde Project Reveal
+  const avantList = document.querySelector('.avant-list');
+  const avantItems = document.querySelectorAll('.avant-item');
+  if (avantList && avantItems.length > 0) {
+    gsap.fromTo(avantItems, 
+      { opacity: 0, y: 50 },
+      {
+        opacity: 1, 
+        y: 0, 
+        duration: 0.8, 
+        stagger: 0.15,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: avantList,
+          start: 'top 80%',
+          toggleActions: 'play none none reverse'
+        }
+      }
+    );
+  }
+
+  // Initialize Contact Handshake Transition component
+  const contactTransition = new ContactHandshakeTransition();
+
+  // Unified Header Theme and Nav Observer for Dark Sections (Projects & Contact)
+  const darkSections = document.querySelectorAll('.avant-work-scene, .contact-scene');
+  const lightSections = document.querySelectorAll('.about-scene');
+  
+  if ('IntersectionObserver' in window) {
+    const sectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // Apply dark theme when over any dark section
+            if (entry.target.classList.contains('contact-scene') || entry.target.classList.contains('avant-work-scene')) {
+              siteHeader.classList.add('dark-theme');
+              if (window.ambientMesh) window.ambientMesh.setTheme('dark');
+            } else {
+              siteHeader.classList.remove('dark-theme');
+              if (window.ambientMesh) window.ambientMesh.setTheme('light');
+            }
+            
+            // Update active nav link
+            if (entry.target.id === 'work') {
+              setActiveNavLink('work');
+            } else if (entry.target.id === 'about') {
+              setActiveNavLink('about');
+            } else if (entry.target.id === 'contact') {
+              setActiveNavLink('contact');
+              // Lazy-load hand animation frames when near contact section
+              contactTransition.preloadFrames();
+            }
+          } else {
+            // Check if we are still intersecting another dark section
+            const anyDarkIntersecting = Array.from(darkSections).some(
+              section => {
+                const rect = section.getBoundingClientRect();
+                return rect.top < window.innerHeight && rect.bottom > 0;
+              }
+            );
+            if (!anyDarkIntersecting) {
+              siteHeader.classList.remove('dark-theme');
+              if (window.ambientMesh) window.ambientMesh.setTheme('light');
+            }
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+    darkSections.forEach(sec => sectionObserver.observe(sec));
+    lightSections.forEach(sec => sectionObserver.observe(sec));
+  }
+}
+
+init();

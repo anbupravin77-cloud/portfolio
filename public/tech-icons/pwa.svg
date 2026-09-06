@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="pwaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5A0FC8"/>
+      <stop offset="100%" stop-color="#3D008D"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#pwaGrad)"/>
+  <path fill="#FFFFFF" d="M32 94h14l8-28h12c11 0 18-6 18-16s-7-16-18-16H32v60zm14-46h10c4.5 0 7.5 2.5 7.5 6s-3 6-7.5 6H46V48z"/>
+  <path fill="#00E6FF" d="M72 94l12-38h10l12 38h-11l-2.5-9h-9L81 94H72zm13-17h6.5l-3.2-12.5h-.1L85 77z"/>
+  <polygon points="60,26 44,58 56,58 48,86 76,46 62,46" fill="#FFD700" opacity="0.9"/>
+</svg>
